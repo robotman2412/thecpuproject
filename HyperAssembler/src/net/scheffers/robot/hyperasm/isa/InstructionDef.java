@@ -22,6 +22,7 @@ public class InstructionDef {
         def.type = Type.ONE_WORD;
         def.numArgs = 0;
         def.tokenPattern = tokenPattern;
+        def.numWords = 1;
         return def;
     }
 
@@ -44,6 +45,7 @@ public class InstructionDef {
         def.arguments = arguments;
         def.numArgs = arguments.length;
         def.tokenPattern = tokenPattern;
+        def.singleWord = insnCode;
         return def;
     }
     

@@ -5,7 +5,7 @@ import processing.core.PApplet;
 public class GR8EMUr3_1 extends PApplet {
 	
 	public static void main(String[] args) {
-		
+		PApplet.main(GR8CPURev3_1.class.getName());
 	}
 	
 	@Override

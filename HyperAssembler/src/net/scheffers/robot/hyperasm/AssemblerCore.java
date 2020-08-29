@@ -23,10 +23,11 @@ public class AssemblerCore {
 	
 	public static void main(String[] args) {
 		InstructionSet isa = new InstructionSet();
+		isa.wordBits = 8;
 		isa.instructions = new InstructionDef[] {
 				InstructionDef.singleWordSingleArg(0x01, new String[] {"load", "%"}),
 				InstructionDef.singleWordDoubleArg(0x02, true, new String[] {"store", "%"}),
-				InstructionDef.singleWord(0x03, new String[] {"halt"}),
+				InstructionDef.singleWord(0xff, new String[] {"halt"}),
 				InstructionDef.singleWord(0x03, new String[] {"copy", "your", "to", "ass"})
 		};
 		isa.recalcMap();
@@ -239,18 +240,7 @@ public class AssemblerCore {
 	public static Pass1Out pass1(Pass0Out in, InstructionSet isa) {
 		long currentAddress = 0;
 		int nLines = in.tokensOut.length;
-		Pass1Out out = new Pass1Out();
-		out.lineInsnArgs = new String[nLines][];
-		out.lineInsns = new InstructionDef[nLines];
-		out.lineLengths = new long[nLines];
-		out.lineStartAddresses = new long[nLines];
-		out.labels = new HashMap<>();
-		out.tokensOut = in.tokensOut;
-		out.errors = in.errors;
-		out.warnings = in.warnings;
-		out.removePrefixPadding = in.removePrefixPadding;
-		out.tokensSourceFiles = in.tokensSourceFiles;
-		out.tokenLineNums = in.tokenLineNums;
+		Pass1Out out = new Pass1Out(in, nLines);
 		for_pass1: for (int i = 0; i < nLines; i++) {
 			out.lineStartAddresses[i] = currentAddress;
 			String[] line = out.tokensOut[i];
@@ -349,7 +339,29 @@ public class AssemblerCore {
 	 * @return the final program and data needed to build an assembly dump
 	 */
 	public static Pass2Out pass2(Pass1Out in, InstructionSet isa) {
-		return null;
+		int nLines = in.tokensOut.length;
+		Pass2Out out = new Pass2Out(in, nLines);
+		out.wordsOut = new long[(int) out.totalLength];
+		for (int i = 0; i < nLines; i++) {
+			if (out.lineInsns[i] == null) {
+				continue;
+			}
+			InstructionDef insn = out.lineInsns[i];
+			String[] args = out.lineInsnArgs[i];
+			if ((args == null && insn.numArgs != 0) || insn.numArgs != args.length) {
+				out.errors.add(new CompilerError(out.tokensSourceFiles[i], i, "Number of arguments found do not match instruction, this is a bug."));
+				continue;
+			}
+			long address = out.lineStartAddresses[i];
+			//TODO: resolve arguments properly
+			long[] insnOut = insn.getBytes(new long[insn.numArgs], isa.wordBits);
+			if (insnOut == null || insn.numWords != insnOut.length || insn.numWords != out.lineLengths[i]) {
+				out.errors.add(new CompilerError(out.tokensSourceFiles[i], i, "Number of words do not match instruction, this is a bug."));
+				continue;
+			}
+			System.arraycopy(insnOut, 0, out.wordsOut, (int) address, insn.numWords);
+		}
+		return out;
 	}
 	
 	/**

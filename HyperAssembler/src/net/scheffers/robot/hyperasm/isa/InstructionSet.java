@@ -7,6 +7,7 @@ public class InstructionSet {
     public InstructionDef[] instructions;
     public Map<String, InstructionDef[]> firstTokenMap;
     public String[] forbiddenNames;
+    public int wordBits;
     
     public void recalcMap() {
         firstTokenMap = new HashMap<>();
@@ -32,7 +33,7 @@ public class InstructionSet {
     }
     
     public boolean isValidLabelName(String s) {
-        if (!s.matches("a-zA-Z0-9_")) {
+        if (!s.matches("[a-zA-Z0-9_]+")) {
             return false;
         }
         for (String youShallNotPass : forbiddenNames) {
