@@ -4,6 +4,7 @@ import com.sun.istack.internal.Nullable;
 import net.scheffers.robot.hyperasm.exception.CompilerError;
 import net.scheffers.robot.hyperasm.exception.CompilerSyntaxError;
 import net.scheffers.robot.hyperasm.exception.CompilerWarning;
+import net.scheffers.robot.hyperasm.expression.Expression;
 import net.scheffers.robot.hyperasm.importing.DirectoryImportSupplier;
 import net.scheffers.robot.hyperasm.importing.ImportSupplier;
 import net.scheffers.robot.hyperasm.importing.NopImportSupplier;
@@ -13,13 +14,14 @@ import net.scheffers.robot.hyperasm.isa.InstructionSet;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 public class AssemblerCore {
+	
+	public static Charset IBM437 = Charset.forName("IBM437");
 	
 	public static void main(String[] args) {
 		InstructionSet isa = new InstructionSet();
@@ -133,8 +135,8 @@ public class AssemblerCore {
 			tokensedLines[i] = tokeniseLine(rawLines[i]);
 		}
 		Pass0Out pass0 = pass0(tokensedLines, supplier, fileName);
-		Pass1Out pass1 = pass1(pass0, instructionSet);
-		return pass2(pass1, instructionSet);
+		Pass1Out pass1 = pass1(pass0, instructionSet, IBM437);
+		return pass2(pass1, instructionSet, IBM437);
 	}
 	
 	/**
@@ -237,7 +239,7 @@ public class AssemblerCore {
 	 * @param isa the instructionset for assembling
 	 * @return data needed to finish assembling in pass 2
 	 */
-	public static Pass1Out pass1(Pass0Out in, InstructionSet isa) {
+	public static Pass1Out pass1(Pass0Out in, InstructionSet isa, Charset stringCharset) {
 		long currentAddress = 0;
 		int nLines = in.tokensOut.length;
 		Pass1Out out = new Pass1Out(in, nLines);
@@ -247,15 +249,32 @@ public class AssemblerCore {
 			if (line.length == 0) {
 				continue;
 			}
+			
+			// Check for labels and address jumps.
 			if (line[0].length() > 0) {
 				if (line[0].equals("*")) {
-					//TODO: set start address
+					String[] expressionTokens = new String[line.length - 2];
+					System.arraycopy(line, 2, expressionTokens, 0, expressionTokens.length);
+					try {
+						long[] value = Expression.resolve("", expressionTokens, out, i);
+						if (value.length != 1) {
+							throw new Exception("Expected a number or character for label value.");
+						}
+						if (value[0] < currentAddress) {
+							out.warnings.add(new CompilerWarning(out.tokensSourceFiles[i], out.tokenLineNums[i],
+									String.format("Reverse jump in addresses, from 0x%02x to 0x%02x", currentAddress, value[0])
+							));
+						}
+						currentAddress = value[0];
+					} catch (Exception e) {
+						out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i], e.getMessage()));
+					}
 				} else if (!isa.isValidLabelName(line[0])) {
 					out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i],
 							"Invalid label name, please pick another."
 					));
 					continue;
-				} else if (line.length == 1 || !line[1].equals("=")) {
+				} else if (line.length == 1) {
 					if (out.labels.containsKey(line[0])) {
 						Label label = out.labels.get(line[0]);
 						label.address = currentAddress;
@@ -277,11 +296,64 @@ public class AssemblerCore {
 					));
 					continue;
 				} else {
-					//TODO: set by expr
+					String[] expressionTokens = new String[line.length - 2];
+					System.arraycopy(line, 2, expressionTokens, 0, expressionTokens.length);
+					try {
+						long[] value = Expression.resolve("", expressionTokens, out, i);
+						if (value.length != 1) {
+							throw new Exception("Expected a number or character for label value.");
+						}
+						out.labels.put(line[0], new Label(out.tokensSourceFiles[i], out.tokenLineNums[i], value[0], false));
+					} catch (Exception e) {
+						out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i], e.getMessage()));
+					}
 				}
 			}
-			//TODO: check for data / reserve statements
-			if (line.length > 1 && !line[1].equals("=")) { //check for insn
+			
+			if (line.length > 1 && line[1].toLowerCase().matches("data|byte|bytes")) {
+				int lengthyBoie = 0;
+				int lastIndex = 2;
+				for (int x = 2; x < line.length; x++) {
+					if (line[x].equals(",")) {
+						if (x - lastIndex < 1) {
+							out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i], "Expected data."));
+							continue for_pass1;
+						}
+						String[] bullshite = new String[x - lastIndex];
+						System.arraycopy(line, lastIndex, bullshite, 0, bullshite.length);
+						if (bullshite[0].charAt(0) == '"' || bullshite[0].charAt(0) == '\'') {
+							// We need to know the string's length.
+							if (bullshite.length > 1) {
+								out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i]));
+								continue for_pass1;
+							}
+							long[] str = Expression.unescapeAnother(bullshite[0].substring(1, bullshite[0].length() - 1), stringCharset);
+							currentAddress += str.length;
+						}
+						else
+						{
+							currentAddress ++;
+						}
+					}
+				}
+			}
+			else if (line.length > 1 && line[1].equalsIgnoreCase("reserve")) {
+				String[] tokenyBoys = new String[line.length - 2];
+				System.arraycopy(line, 2, tokenyBoys, 0, tokenyBoys.length);
+				try {
+					long[] how = Expression.resolve("", tokenyBoys, out, i);
+					if (how.length > 1) {
+						out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i], "Unexpected string."));
+						continue;
+					}
+					currentAddress += (int) how[0];
+				} catch (Exception e) {
+					out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i], e.getMessage(), e));
+					continue;
+				}
+			}
+			// Check for instructions.
+			else if (line.length > 1 && !line[1].equals("=")) { //check for insn
 				String first = line[1];
 				InstructionDef[] toCheck = isa.firstTokenMap.get(first.toLowerCase());
 				if (toCheck == null) {
@@ -338,7 +410,7 @@ public class AssemblerCore {
 	 * @param isa the instructionset for assembling
 	 * @return the final program and data needed to build an assembly dump
 	 */
-	public static Pass2Out pass2(Pass1Out in, InstructionSet isa) {
+	public static Pass2Out pass2(Pass1Out in, InstructionSet isa, Charset stringCharset) {
 		int nLines = in.tokensOut.length;
 		Pass2Out out = new Pass2Out(in, nLines);
 		out.wordsOut = new long[(int) out.totalLength];
@@ -349,14 +421,27 @@ public class AssemblerCore {
 			InstructionDef insn = out.lineInsns[i];
 			String[] args = out.lineInsnArgs[i];
 			if ((args == null && insn.numArgs != 0) || insn.numArgs != args.length) {
-				out.errors.add(new CompilerError(out.tokensSourceFiles[i], i, "Number of arguments found do not match instruction, this is a bug."));
+				out.errors.add(new CompilerError(out.tokensSourceFiles[i], out.tokenLineNums[i], "Number of arguments found do not match instruction, this is a bug."));
 				continue;
 			}
 			long address = out.lineStartAddresses[i];
-			//TODO: resolve arguments properly
-			long[] insnOut = insn.getBytes(new long[insn.numArgs], isa.wordBits);
+			// Get arguments.
+			long[] insnArgs = new long[insn.numArgs];
+			for (int x = 0; x < insnArgs.length; x++) {
+				try {
+					long[] arg = Expression.resolve("", new String[] {args[x]}, out, i);
+					if (arg.length != 1) {
+						throw new Exception("Unexpected string.");
+					}
+					insnArgs[x] = arg[0];
+				} catch (Exception e) {
+					out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i], e.getMessage()));
+				}
+			}
+			// Get output.
+			long[] insnOut = insn.getBytes(insnArgs, isa.wordBits);
 			if (insnOut == null || insn.numWords != insnOut.length || insn.numWords != out.lineLengths[i]) {
-				out.errors.add(new CompilerError(out.tokensSourceFiles[i], i, "Number of words do not match instruction, this is a bug."));
+				out.errors.add(new CompilerError(out.tokensSourceFiles[i], out.tokenLineNums[i], "Number of words do not match instruction, this is a bug."));
 				continue;
 			}
 			System.arraycopy(insnOut, 0, out.wordsOut, (int) address, insn.numWords);

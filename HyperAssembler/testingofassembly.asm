@@ -5,6 +5,8 @@
 label1	store $69
 		load label0
 		copy your to ass
+		reserve 2
+		data "what"
 		;this insn does not exist
 		;copy invalid to instruction
 		halt
