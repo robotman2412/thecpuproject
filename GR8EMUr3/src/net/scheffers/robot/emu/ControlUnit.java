@@ -149,6 +149,7 @@ public class ControlUnit extends GUIElement implements PConstants, GR8EMUConstan
 	
 	@Override
 	public void keyPressed() {
+		if (selected == 0) return;
 		if (emulator.forceTick > 0 || emulator.doTick) {
 			emulator.doTick = false;
 			try {

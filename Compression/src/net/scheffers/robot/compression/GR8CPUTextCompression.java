@@ -79,8 +79,10 @@ public class GR8CPUTextCompression {
 			occurances.set(0, merged);
 		}
 		
+		// This produces our tree.
 		Node tree = occurances.get(0);
 		
+		// Fuck off with your stupid tree lol.
 		exportRev2(tree);
 	}
 	

@@ -17,7 +17,7 @@ public class ArithmeticLogicUnit extends GUIElement implements PConstants, GR8EM
 	public boolean isNegative;
 	
 	public ArithmeticLogicUnit(PApplet p, int x, int y, String name) {
-		super(p, x, y, thingyWidth, thingyHeight);
+		super(p, x, y, thingyWidth, 2 * thingyHeight);
 		this.name = name;
 	}
 	
@@ -33,7 +33,7 @@ public class ArithmeticLogicUnit extends GUIElement implements PConstants, GR8EM
 		p.strokeWeight(1);
 		p.pushMatrix();
 		p.translate(x, y);
-		p.rect(0, 0, thingyWidth, thingyHeight);
+		p.rect(0, 0, thingyWidth, 2 * thingyHeight);
 		
 		p.textAlign(CENTER);
 		p.textFont(GR8EMUr3_1.font12, 12);
@@ -50,21 +50,34 @@ public class ArithmeticLogicUnit extends GUIElement implements PConstants, GR8EM
 			p.ellipse(i * 18 + 55, 34, 16, 16);
 			temp <<= 1;
 		}
-		// Carry flag.
+		// Carry out.
 		if ((value & 0x100) > 0) {
 			p.fill(lightYellowOn);
 		} else {
 			p.fill(lightYellowOff);
 		}
 		p.ellipse(37, 34, 16, 16);
-		// Zero flag.
+		// Zero.
 		if ((value & 0xff) == 0) {
 			p.fill(lightBlueOn);
 		} else {
 			p.fill(lightBlueOff);
 		}
 		p.ellipse(19, 34, 16, 16);
-		
+		// Carry flag.
+		if (GR8EMUr3_1.inst.emulator.instance.flagCout) {
+			p.fill(lightYellowOn);
+		} else {
+			p.fill(lightYellowOff);
+		}
+		p.ellipse(37, 34 + thingyHeight, 16, 16);
+		// Zero flag.
+		if (GR8EMUr3_1.inst.emulator.instance.flagZero) {
+			p.fill(lightBlueOn);
+		} else {
+			p.fill(lightBlueOff);
+		}
+		p.ellipse(19, 34 + thingyHeight, 16, 16);
 		if (selected == 1) {
 			p.noFill();
 			p.stroke(0xff03f4fc);
@@ -95,6 +108,8 @@ public class ArithmeticLogicUnit extends GUIElement implements PConstants, GR8EM
 		p.textFont(GR8EMUr3_1.font12, 12);
 		p.text("0", thingyWidth * 0.10f, 22);
 		p.text("C", thingyWidth * 0.19f, 22);
+		p.text("0", thingyWidth * 0.10f, 22 + thingyHeight);
+		p.text("C", thingyWidth * 0.19f, 22 + thingyHeight);
 		
 		p.popMatrix();
 	}
@@ -127,53 +142,6 @@ public class ArithmeticLogicUnit extends GUIElement implements PConstants, GR8EM
 	
 	@Override
 	public void keyPressed() {
-		if (valueUpdater == null) return;
-		if (selected == 1) {
-			if (p.key >= '0' && p.key <= '9') {
-				value = (value << 4) & 0xff;
-				value |= p.key - '0';
-			} else if (p.key >= 'a' && p.key <= 'f') {
-				value = (value << 4) & 0xff;
-				value |= p.key - 'a' + 0x0a;
-			} else if (p.key >= 'A' && p.key <= 'F') {
-				value = (value << 4) & 0xff;
-				value |= p.key - 'A' + 0x0a;
-			}
-			valueUpdater.accept(value);
-		}
-		else if (selected == 2) {
-			if (p.key == BACKSPACE || p.key == DELETE) {
-				value /= 10;
-			}
-			else if (p.key >= '0' && p.key <= '9' && value < 100) {
-				value *= 10;
-				value += p.key - '0';
-			}
-			valueUpdater.accept(value & 0xff);
-		}
-		else if (selected == 3) {
-			if (p.key == BACKSPACE || p.key == DELETE) {
-				isNegative = (byte) value < 0;
-				value = (byte) value / 10;
-			}
-			else if (p.key >= '0' && p.key <= '9' && Math.abs((byte) value) < 100) {
-				if (isNegative && value == 0) {
-					value -= p.key - '0';
-				} else {
-					value = (byte) value * 10;
-					if (value >= 0) {
-						value += p.key - '0';
-					} else {
-						value -= p.key - '0';
-					}
-				}
-			}
-			else if (p.key == '-') {
-				value = -value;
-				isNegative = !isNegative;
-			}
-			valueUpdater.accept(value & 0xff);
-		}
 	}
 	
 	@Override

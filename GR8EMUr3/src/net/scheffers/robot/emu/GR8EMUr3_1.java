@@ -2,9 +2,7 @@ package net.scheffers.robot.emu;
 
 import jutils.database.BytePool;
 import jutils.gui.style.TextureButtonStyle;
-import jutils.guiv2.Button;
-import jutils.guiv2.GUIScreen;
-import jutils.guiv2.TextureButton;
+import jutils.guiv2.*;
 import processing.core.PApplet;
 import processing.core.PFont;
 import processing.core.PImage;
@@ -30,7 +28,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	
 	@Override
 	public void settings() {
-		size(601, 601);
+		size(921, 601);
 	}
 	
 	public EmuThread emulator;
@@ -38,36 +36,68 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	public static PFont font48;
 	public static GR8EMUr3_1 inst;
 	
+	//region GUI
 	public GUIScreen screen;
 	public Register8Bit regA, regB, regX, regD, regIR, bus;
 	public ArithmeticLogicUnit alu;
 	public Register16Bit regPC, regAR, stackPtr, adrBus;
+	//endregion GUI
 	
+	//region settings
+	public GUIScreen settingScreen;
+	
+	/** Select file mapped to virtual drive. */
+	public Button selDriveFile;
+	/** File mapped to virtual drive. */
+	public String driveFile;
+	/** File mapped to virtual drive. */
+	public Text dispDriveFile;
+	
+	/** Memory mapped IO address inputs. */
+	public TextInput mmioTTY, mmioKeyboard, mmioDriveAddr, mmioDrivePort;
+	/** Memory mapped IO addresses. */
+	public int mmioAdrTTY, mmioAdrKeyboard, mmioAdrDriveAddr, mmioAdrDrivePort;
+	/** Memory mapped IO default addresses. */
+	public static final int mmioDefTTY = 0xfefd, mmioDefKeyboard = 0xfefc, mmioDefDriveAddr = 0xfed0, mmioDefDrivePort = 0xfed4;
+	//endregion settings
+	
+	/** Memory available to the CPU. */
 	public Memory memory, rom;
 	public ControlUnit controlUnit;
 	
+	//region images
+	/** Images for RESET button. */
 	public PImage reset, resetHover, resetPressed, resetDisabled;
+	/** Images for play button. */
 	public PImage play, playHover, playPressed, playDisabled;
+	/** Images for pause button. */
 	public PImage pause, pauseHover, pausePressed, pauseDisabled;
+	/** Images for cycle button. */
 	public PImage cycle, cycleHover, cyclePressed, cycleDisabled;
+	/** Images for instruction button. */
 	public PImage instruction, instructionHover, instructionPressed, instructionDisabled;
+	//endregion images
 	
+	/** CPU control buttons. */
 	public TextureButton resetButton, playButton, pauseButton, cycleButton, instructionButton;
 	
-	public byte[][] ttyBuffer;
-	public int ttyWidth, ttyHeight, ttyCursorPos;
+	/** Keyboard module. */
+	public Keyboardonator keyboard;
 	
-//	public byte regA, regB, regX, regD, regIR, bus, stage, mode;
-//	public short regPC, regAR, stackPtr, adrBus, alo;
-//	
-//	public boolean flagCout, flagZero;
-//	public byte[] rom;
-//	public byte[] ram;
-//	public short[] breakpoints;
-//	public int[] isa = defaultISA;
+	/** Character buffer for the TTY. */
+	public char[][] ttyBuffer;
+	/** Input buffer not yet consumed by the CPU. */
+	public byte[] ttyInputBuffer;
+	/** TTY variables. */
+	public int ttyWidth, ttyHeight, ttyCursorPos, ttyInputLen, ttyInputPos;
+	
+	/** Whether or not the settings thingy is open. */
+	public boolean settings;
 	
 	@Override
+	@SuppressWarnings("all")
 	public void setup() {
+		inst = this;
 		font12 = loadFont("font12.vlw");
 		font48 = loadFont("font48.vlw");
 		
@@ -78,37 +108,40 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		emulator.start();
 		
 		//region loading
-		reset =					loadImage("reset.png");
-		resetHover =			loadImage("reset_hover.png");
-		resetPressed =			loadImage("reset_pressed.png");
-		resetDisabled =			loadImage("reset_disabled.png");
+		reset = loadImage("reset.png");
+		resetHover = loadImage("reset_hover.png");
+		resetPressed = loadImage("reset_pressed.png");
+		resetDisabled = loadImage("reset_disabled.png");
 		
-		play =					loadImage("play.png");
-		playHover =				loadImage("play_hover.png");
-		playPressed =			loadImage("play_pressed.png");
-		playDisabled =			loadImage("play_disabled.png");
+		play = loadImage("play.png");
+		playHover = loadImage("play_hover.png");
+		playPressed = loadImage("play_pressed.png");
+		playDisabled = loadImage("play_disabled.png");
 		
-		pause =					loadImage("pause.png");
-		pauseHover =			loadImage("pause_hover.png");
-		pausePressed =			loadImage("pause_pressed.png");
-		pauseDisabled =			loadImage("pause_disabled.png");
+		pause = loadImage("pause.png");
+		pauseHover = loadImage("pause_hover.png");
+		pausePressed = loadImage("pause_pressed.png");
+		pauseDisabled = loadImage("pause_disabled.png");
 		
-		cycle =					loadImage("cycle.png");
-		cycleHover =			loadImage("cycle_hover.png");
-		cyclePressed =			loadImage("cycle_pressed.png");
-		cycleDisabled =			loadImage("cycle_disabled.png");
+		cycle = loadImage("cycle.png");
+		cycleHover = loadImage("cycle_hover.png");
+		cyclePressed = loadImage("cycle_pressed.png");
+		cycleDisabled = loadImage("cycle_disabled.png");
 		
-		instruction =			loadImage("instruction.png");
-		instructionHover =		loadImage("instruction_hover.png");
-		instructionPressed =	loadImage("instruction_pressed.png");
-		instructionDisabled =	loadImage("instruction_disabled.png");
+		instruction = loadImage("instruction.png");
+		instructionHover = loadImage("instruction_hover.png");
+		instructionPressed = loadImage("instruction_pressed.png");
+		instructionDisabled = loadImage("instruction_disabled.png");
 		//endregion loading
 		
 		//region tty
 		ttyWidth = 40;
 		ttyHeight = 30;
-		ttyBuffer = new byte[ttyWidth][ttyHeight];
+		ttyBuffer = new char[ttyHeight][ttyWidth];
+		ttyInputBuffer = new byte[ttyWidth];
 		ttyCursorPos = 0;
+		ttyInputPos = 0;
+		ttyInputLen = 0;
 		//endregion tty
 		
 		screen = new GUIScreen(this);
@@ -116,80 +149,93 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		//region control
 		resetButton = new TextureButton(this, 2 * thingyWidth + 5, 5, 40, 40, false, new TextureButtonStyle(
 				reset, resetHover, resetPressed, resetDisabled
-		), ()->emulator.reset());
+		), () -> {
+			emulator.reset();
+			for (int y = 0; y < ttyHeight; y++) {
+				for (int x = 0; x < ttyWidth; x++) {
+					ttyBuffer[y][x] = 0;
+				}
+			}
+			ttyInputBuffer = new byte[ttyInputBuffer.length];
+			ttyInputLen = 0;
+			ttyCursorPos = 0;
+		});
 		screen.add(resetButton);
 		
 		pauseButton = new TextureButton(this, 2 * thingyWidth + 50, 5, 40, 40, false, new TextureButtonStyle(
 				pause, pauseHover, pausePressed, pauseDisabled
-		), ()->emulator.doTick=false);
+		), () -> emulator.doTick = false);
 		screen.add(pauseButton);
 		
 		playButton = new TextureButton(this, 2 * thingyWidth + 95, 5, 40, 40, false, new TextureButtonStyle(
 				play, playHover, playPressed, playDisabled
-		), ()->emulator.doTick=true);
+		), () -> emulator.doTick = true);
 		screen.add(playButton);
 		
 		cycleButton = new TextureButton(this, 2 * thingyWidth + 140, 5, 40, 40, false, new TextureButtonStyle(
 				cycle, cycleHover, cyclePressed, cycleDisabled
-		), ()->emulator.forceTick++);
+		), () -> emulator.forceTick++);
 		screen.add(cycleButton);
 		
 		instructionButton = new TextureButton(this, 2 * thingyWidth + 185, 5, 40, 40, false, new TextureButtonStyle(
 				instruction, instructionHover, instructionPressed, instructionDisabled
 		));
 		screen.add(instructionButton);
+		
+		keyboard = new Keyboardonator(this);
+		screen.add(keyboard);
 		//endregion control
 		
 		//region speed
-		screen.add(new Button(this, 2 * thingyWidth + 5, 50, 60, 20, "10 MHz", false, ()->emulator.setHertz(10000000)));
-		screen.add(new Button(this, 2 * thingyWidth + 5, 75, 60, 20, "1 MHz", false, ()->emulator.setHertz(1000000)));
-		screen.add(new Button(this, 2 * thingyWidth + 5, 100, 60, 20, "100 KHz", false, ()->emulator.setHertz(100000)));
-		screen.add(new Button(this, 2 * thingyWidth + 5, 125, 60, 20, "10 KHz", false, ()->emulator.setHertz(10000)));
-		screen.add(new Button(this, 2 * thingyWidth + 5, 150, 60, 20, "1 KHz", false, ()->emulator.setHertz(1000)));
+		screen.add(new Button(this, 2 * thingyWidth + 5, 50, 60, 20, "10 MHz", false, () -> emulator.setHertz(10000000)));
+		screen.add(new Button(this, 2 * thingyWidth + 5, 75, 60, 20, "1 MHz", false, () -> emulator.setHertz(1000000)));
+		screen.add(new Button(this, 2 * thingyWidth + 5, 100, 60, 20, "100 KHz", false, () -> emulator.setHertz(100000)));
+		screen.add(new Button(this, 2 * thingyWidth + 5, 125, 60, 20, "10 KHz", false, () -> emulator.setHertz(10000)));
+		screen.add(new Button(this, 2 * thingyWidth + 5, 150, 60, 20, "1 KHz", false, () -> emulator.setHertz(1000)));
 		
-		screen.add(new Button(this, 2 * thingyWidth + 70, 50, 60, 20, "100 Hz", false, ()->emulator.setHertz(100)));
-		screen.add(new Button(this, 2 * thingyWidth + 70, 75, 60, 20, "10 Hz", false, ()->emulator.setHertz(10)));
-		screen.add(new Button(this, 2 * thingyWidth + 70, 100, 60, 20, "5 Hz", false, ()->emulator.setHertz(5)));
-		screen.add(new Button(this, 2 * thingyWidth + 70, 125, 60, 20, "2 Hz", false, ()->emulator.setHertz(2)));
-		screen.add(new Button(this, 2 * thingyWidth + 70, 150, 60, 20, "1 Hz", false, ()->emulator.setHertz(1)));
+		screen.add(new Button(this, 2 * thingyWidth + 70, 50, 60, 20, "100 Hz", false, () -> emulator.setHertz(100)));
+		screen.add(new Button(this, 2 * thingyWidth + 70, 75, 60, 20, "10 Hz", false, () -> emulator.setHertz(10)));
+		screen.add(new Button(this, 2 * thingyWidth + 70, 100, 60, 20, "5 Hz", false, () -> emulator.setHertz(5)));
+		screen.add(new Button(this, 2 * thingyWidth + 70, 125, 60, 20, "2 Hz", false, () -> emulator.setHertz(2)));
+		screen.add(new Button(this, 2 * thingyWidth + 70, 150, 60, 20, "1 Hz", false, () -> emulator.setHertz(1)));
 		//endregion speed
 		
 		//region modules
 		bus = new Register8Bit(this, 1 * thingyWidth, 0 * thingyHeight, "data bus");
-		bus.valueSupplier = ()->(int)emulator.instance.bus;
+		bus.valueSupplier = () -> (int) emulator.instance.bus;
 		screen.add(bus);
 		
 		regA = new Register8Bit(this, 1 * thingyWidth, 1 * thingyHeight, "A register");
-		regA.valueSupplier = ()->(int)emulator.instance.regA;
-		regA.valueUpdater = (v)-> emulator.instance.regA=(byte)(int)v;
+		regA.valueSupplier = () -> (int) emulator.instance.regA;
+		regA.valueUpdater = (v) -> emulator.instance.regA = (byte) (int) v;
 		screen.add(regA);
 		
 		regB = new Register8Bit(this, 1 * thingyWidth, 2 * thingyHeight, "B register");
-		regB.valueSupplier = ()->(int)emulator.instance.regB;
-		regB.valueUpdater = (v)-> emulator.instance.regB=(byte)(int)v;
+		regB.valueSupplier = () -> (int) emulator.instance.regB;
+		regB.valueUpdater = (v) -> emulator.instance.regB = (byte) (int) v;
 		screen.add(regB);
 		
 		alu = new ArithmeticLogicUnit(this, 1 * thingyWidth, 3 * thingyHeight, "ALU");
-		alu.valueSupplier = ()->(int)emulator.instance.alo;
+		alu.valueSupplier = () -> (int) emulator.instance.alo;
 		screen.add(alu);
 		
 		regX = new Register8Bit(this, 1 * thingyWidth, 5 * thingyHeight, "X register");
-		regX.valueSupplier = ()->(int)emulator.instance.regX;
-		regX.valueUpdater = (v)-> emulator.instance.regX=(byte)(int)v;
+		regX.valueSupplier = () -> (int) emulator.instance.regX;
+		regX.valueUpdater = (v) -> emulator.instance.regX = (byte) (int) v;
 		screen.add(regX);
 		
 		regD = new Register8Bit(this, 1 * thingyWidth, 6 * thingyHeight, "D register");
-		regD.valueSupplier = ()->(int)emulator.instance.regD;
-		regD.valueUpdater = (v)-> emulator.instance.regD=(byte)(int)v;
+		regD.valueSupplier = () -> (int) emulator.instance.regD;
+		regD.valueUpdater = (v) -> emulator.instance.regD = (byte) (int) v;
 		screen.add(regD);
 		
 		regIR = new Register8Bit(this, 1 * thingyWidth, 7 * thingyHeight, "instruction register");
-		regIR.valueSupplier = ()->(int)emulator.instance.regIR;
-		regIR.valueUpdater = (v)-> emulator.instance.regIR=(byte)(int)v;
+		regIR.valueSupplier = () -> (int) emulator.instance.regIR;
+		regIR.valueUpdater = (v) -> emulator.instance.regIR = (byte) (int) v;
 		screen.add(regIR);
 		
 		adrBus = new Register16Bit(this, 0 * thingyWidth, 0 * thingyHeight, "address bus");
-		adrBus.valueSupplier = ()->(int)emulator.instance.adrBus;
+		adrBus.valueSupplier = () -> (int) emulator.instance.adrBus;
 		screen.add(adrBus);
 		
 		memory = new Memory(this, 0 * thingyWidth, 1 * thingyHeight, "memory");
@@ -198,41 +244,74 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		screen.add(memory);
 		
 		regPC = new Register16Bit(this, 0 * thingyWidth, 5 * thingyHeight, "program counter");
-		regPC.valueSupplier = ()->(int)emulator.instance.regPC;
-		regPC.valueUpdater = (v)-> emulator.instance.regPC=(short)(int)v;
+		regPC.valueSupplier = () -> (int) emulator.instance.regPC;
+		regPC.valueUpdater = (v) -> emulator.instance.regPC = (short) (int) v;
 		screen.add(regPC);
 		
 		regAR = new Register16Bit(this, 0 * thingyWidth, 6 * thingyHeight, "address register");
-		regAR.valueSupplier = ()->(int)emulator.instance.regAR;
-		regAR.valueUpdater = (v)-> emulator.instance.regAR=(short)(int)v;
+		regAR.valueSupplier = () -> (int) emulator.instance.regAR;
+		regAR.valueUpdater = (v) -> emulator.instance.regAR = (short) (int) v;
 		screen.add(regAR);
 		
 		stackPtr = new Register16Bit(this, 0 * thingyWidth, 7 * thingyHeight, "stack pointer");
-		stackPtr.valueSupplier = ()->(int)emulator.instance.stackPtr;
-		stackPtr.valueUpdater = (v)-> emulator.instance.stackPtr=(short)(int)v;
+		stackPtr.valueSupplier = () -> (int) emulator.instance.stackPtr;
+		stackPtr.valueUpdater = (v) -> emulator.instance.stackPtr = (short) (int) v;
 		screen.add(stackPtr);
 		
 		controlUnit = new ControlUnit(this, 2 * thingyWidth, 5 * thingyHeight, emulator);
 		screen.add(controlUnit);
 		//endregion modules
 		
-		surface.setResizable(true);
+		settingScreen = new GUIScreen(this);
+		
+		//region settings
+		
+		selDriveFile = new Button(this, 5, 50, 100, 20, "select drive file", false,
+				()->selectInput("Seleft drive file...", "selectDrive")
+		);
+		
+		dispDriveFile = new Text(this, 110, 60, "none selected");
+		
+		//endregion settings
+		
+		//surface.setResizable(true);
 	}
 	
 	@Override
 	public void draw() {
 		background(255);
 		
-		pauseButton.enabled = emulator.doTick;
-		playButton.enabled = !emulator.doTick;
-		cycleButton.enabled = !emulator.doTick;
-		instructionButton.enabled = !emulator.doTick;
-		
-		textFont(font12, 12);
-		textAlign(CORNER);
-		text(getSpeeds(), 2f * thingyWidth + 20, 2.5f * thingyHeight);
-		
-		screen.render();
+		if (settings) {
+			settingScreen.render();
+		}
+		else
+		{
+			// Button enable conditions.
+			pauseButton.enabled = emulator.doTick;
+			playButton.enabled = !emulator.doTick;
+			cycleButton.enabled = !emulator.doTick;
+			instructionButton.enabled = !emulator.doTick;
+			
+			// Draw the measured frequency.
+			textFont(font12, 12);
+			textAlign(CORNER);
+			fill(0);
+			text(getSpeeds(), 2f * thingyWidth + 20, 2.5f * thingyHeight);
+			
+			// Draw the TTY.
+			rect(-ttyWidth * 7 + width - 22, -ttyHeight * 13 + height - 42, ttyWidth * 7 + 4, ttyHeight * 13 + 4);
+			fill(0xff00ff00);
+			for (int y = 0; y < ttyHeight; y++) {
+				for (int x = 0; x < ttyWidth; x++) {
+					if (ttyBuffer[y][x] != 0) {
+						text(ttyBuffer[y][x], (x - ttyWidth) * 7 + width - 20, (y - ttyHeight) * 13 + height - 29);
+					}
+				}
+			}
+			
+			// Draw the GUI elements.
+			screen.render();
+		}
 	}
 	
 	public String getSpeeds() {
@@ -247,6 +326,54 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		} else {
 			hertz = Math.round(hertz * 10d) / 10d;
 			return hertz + " Hz";
+		}
+	}
+	
+	public void ttyWrite(byte val) {
+		if (val == (byte) '\n') {
+			ttyNewline();
+			return;
+		} else if (val == (byte) '\r') {
+			ttyCursorPos = 0;
+			return;
+		} else if (val == (byte) '\b') if (ttyCursorPos > 0) {
+			ttyCursorPos--;
+			ttyBuffer[ttyHeight - 1][ttyCursorPos] = (char) 0;
+			return;
+		}
+		if (ttyCursorPos == ttyWidth) {
+			ttyNewline();
+		}
+		ttyBuffer[ttyHeight - 1][ttyCursorPos] = (char) val;
+		ttyCursorPos++;
+	}
+	
+	public void ttyNewline() {
+		for (int i = 0; i < ttyHeight - 1; i++) {
+			ttyBuffer[i] = ttyBuffer[i + 1];
+		}
+		ttyBuffer[ttyHeight - 1] = new char[ttyWidth];
+		ttyCursorPos = 0;
+	}
+	
+	public void ttyType(byte typed) {
+		if (ttyInputLen < ttyInputBuffer.length) {
+			ttyInputBuffer[(ttyInputPos + ttyInputLen) % ttyInputBuffer.length] = typed;
+			ttyInputLen++;
+		}
+	}
+	
+	public byte ttyRead(boolean notouchy) {
+		if (ttyInputLen > 0) {
+			byte ret = ttyInputBuffer[ttyInputPos];
+			if (!notouchy) {
+				ttyInputPos++;
+				ttyInputLen--;
+				ttyInputPos %= ttyInputBuffer.length;
+			}
+			return ret;
+		} else {
+			return 0;
 		}
 	}
 	
@@ -288,15 +415,13 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 				}
 				out.addBytes((byte) stuff);
 				stuff = 0;
-			}
-			else
-			{
-				stuff <<= 4;
+			} else {
 				int indexial = hexes.indexOf((char) read);
 				if (indexial == -1) {
 					out.addBytes((byte) stuff);
 					break;
 				}
+				stuff <<= 4;
 				stuff |= indexial;
 			}
 		}
@@ -308,36 +433,67 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	//region UI
 	@Override
 	public void mousePressed() {
-		screen.mousePressed();
+		if (settings) {
+			settingScreen.mousePressed();
+		}
+		else
+		{
+			screen.mousePressed();
+		}
 	}
 	
 	@Override
 	public void mouseReleased() {
-		screen.mouseReleased();
+		if (settings) {
+			settingScreen.mouseReleased();
+		}
+		else
+		{
+			screen.mouseReleased();
+		}
 	}
 	
 	public boolean ctrlPressed;
 	
 	@Override
 	public void keyPressed() {
-		screen.keyPressed();
+		if (settings) {
+			settingScreen.keyPressed();
+		}
+		else
+		{
+			screen.keyPressed();
+			if (ctrlPressed && key == 15) {
+				selectInput("Open ROM or assembly file...", "loadTheThingy");
+				emulator.doTick = false;
+			}
+		}
 		if (keyCode == CONTROL) {
 			ctrlPressed = true;
-		}
-		if (ctrlPressed && key == 15) {
-			selectInput("Open ROM or assembly file...", "loadTheThingy");
-			emulator.doTick = false;
 		}
 	}
 	
 	@Override
 	public void keyReleased() {
-		screen.keyReleased();
+		if (settings) {
+			settingScreen.keyReleased();
+		}
+		else
+		{
+			screen.keyReleased();
+		}
 		if (keyCode == CONTROL) {
 			ctrlPressed = false;
 		}
 	}
 	//endregion UI
+	
+	public void selectDrive(File selected) {
+		if (selected != null) {
+			driveFile = selected.getAbsolutePath();
+			
+		}
+	}
 	
 	@Override
 	public void exit() {
@@ -468,7 +624,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 				} catch (InterruptedException e) {
 					cont = false;
 				}
-				if (res != 0 && res != EXC_HALT && res != EXC_BRK) {
+				if (res != 0) {
 					doTick = false;
 					System.err.println("Emulator stopped with code " + res);
 				}

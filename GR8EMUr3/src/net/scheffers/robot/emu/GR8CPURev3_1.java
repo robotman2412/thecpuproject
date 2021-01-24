@@ -1,6 +1,13 @@
 package net.scheffers.robot.emu;
 
+import jutils.IOUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.Arrays;
+import java.util.Date;
 
 public class GR8CPURev3_1 {
 	
@@ -106,7 +113,7 @@ public class GR8CPURev3_1 {
 			0x00100ac0, 0x00100ac8, 0x00040a40, 0x4201564a, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00100a40, 0x4201564a, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000240, 0x42005648, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-			0x00000640, 0x02005648, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+			0x00000640, 0x02005608, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00100ac0, 0x00100ac8, 0x02040740, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00100ac0, 0x00100ac8, 0x00040a40, 0x08040ac8, 0x000004c0, 0x02048a08, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00100ac0, 0x00100ac8, 0x00040a40, 0x08040ac8, 0x000004c0, 0x02048340, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -262,7 +269,7 @@ public class GR8CPURev3_1 {
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000
+			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			//endregion
 	};
 	
@@ -287,14 +294,166 @@ public class GR8CPURev3_1 {
 	public short[] breakpoints;
 	public int[] isa = defaultISA;
 	
+	public Socket currentSocket;
+	public ServerSocket serverSocket;
+	
+	public long microOrigin0;
+	public long microOrigin1;
+	public int microTimer0;
+	public int microTimer1;
+	public long milliRTC;
+	public int microCount0;
+	public int microCount1;
+	public long milliRTCCount;
+	public int microFlags0;
+	public int microFlags1;
+	public int RTCFlags;
+	
+	public static final int TIMER_FLAG_ENABLED = 0x80;
+	public static final int TIMER_FLAG_IRQ = 0x40;
+	public static final int TIMER_FLAG_NMI = 0x20;
+	public static final int TIMER_FLAG_LATCH = 0x01;
+	
+	public int volumePtr;
+	public byte[] volume;
+	
 	public void writeMMIO(int address, byte value) {
 		address &= 0xffff;
 		
+		//FE20 -> $FE23 -- microsecond timer 0
+		//FE24 -> $FE27 -- microsecond timer 1
+		//FE30 -> $FE33 -- microsecond count 0
+		//FE34 -> $FE37 -- microsecond count 1
+		//FE38 -> $FE3F -- millisecond RTC count
+		//FE40 -- timer 0 flags
+		//FE41 -- timer 1 flags
+		//FE42 -- RTC flags
 		//FEFD -- tty register
+		//FECA -- socket test
 		
-		if (address == 0xfefd) {
+		if ((microFlags0 & TIMER_FLAG_ENABLED) > 0) { // Update timer 0 if it's enabled.
+			microTimer0 = (int) ((System.nanoTime() - microOrigin0) / 1000);
+		}
+		else if ((microFlags1 & TIMER_FLAG_ENABLED) > 0) { // Update timer 1 if it's enabled.
+			microTimer1 = (int) ((System.nanoTime() - microOrigin1) / 1000);
+		}
+		else if ((RTCFlags & TIMER_FLAG_ENABLED) > 0) { // Update RTC if it's enabled.
+			milliRTC = new Date().toInstant().toEpochMilli();
+		}
+		
+		// region timers
+		if (address == 0xfea0) { // Microsecond timer 0 byte 0
+			microTimer0 = (microTimer0 & 0xffffff00) | (value & 0x000000ff);
+			microOrigin0 = System.nanoTime() - microTimer0 * 1000; // Update time origin so the timer updates correctly.
+		}
+		else if (address == 0xfea1) { // Microsecond timer 0 byte 1
+			microTimer0 = (microTimer0 & 0xffff00ff) | ((value << 8) & 0x0000ff00);
+		}
+		else if (address == 0xfea2) { // Microsecond timer 0 byte 2
+			microTimer0 = (microTimer0 & 0xff00ffff) | ((value << 16) & 0x00ff0000);
+		}
+		else if (address == 0xfea3) { // Microsecond timer 0 byte 3
+			microTimer0 = (microTimer0 & 0x00ffffff) | ((value << 24) & 0xff000000);
+		}
+		else if (address == 0xfea4) { // Microsecond timer 1 byte 0
+			microTimer1 = (microTimer1 & 0xffffff00) | (value & 0x000000ff);
+		}
+		else if (address == 0xfea5) { // Microsecond timer 1 byte 1
+			microTimer1 = (microTimer1 & 0xffff00ff) | ((value << 8) & 0x0000ff00);
+		}
+		else if (address == 0xfea6) { // Microsecond timer 1 byte 2
+			microTimer1 = (microTimer1 & 0xff00ffff) | ((value << 16) & 0x00ff0000);
+		}
+		else if (address == 0xfea7) { // Microsecond timer 1 byte 3
+			microTimer1 = (microTimer1 & 0x00ffffff) | ((value << 24) & 0xff000000);
+		}
+		else if (address == 0xfeb0) { // Microsecond count 0 byte 0
+			microCount0 = (microTimer1 & 0xffffff00) | (value & 0x000000ff);
+		}
+		else if (address == 0xfeb1) { // Microsecond count 0 byte 1
+			microCount0 = (microTimer1 & 0xffff00ff) | ((value << 8) & 0x0000ff00);
+		}
+		else if (address == 0xfeb2) { // Microsecond count 0 byte 2
+			microCount0 = (microTimer1 & 0xff00ffff) | ((value << 16) & 0x00ff0000);
+		}
+		else if (address == 0xfeb3) { // Microsecond count 0 byte 3
+			microCount0 = (microTimer1 & 0x00ffffff) | ((value << 24) & 0xff000000);
+		}
+		else if (address == 0xfeb4) { // Microsecond count 1 byte 0
+			microCount1 = (microTimer1 & 0xffffff00) | (value & 0x000000ff);
+		}
+		else if (address == 0xfeb5) { // Microsecond count 1 byte 1
+			microCount1 = (microTimer1 & 0xffff00ff) | ((value << 8) & 0x0000ff00);
+		}
+		else if (address == 0xfeb6) { // Microsecond count 1 byte 2
+			microCount1 = (microTimer1 & 0xff00ffff) | ((value << 16) & 0x00ff0000);
+		}
+		else if (address == 0xfeb7) { // Microsecond count 1 byte 3
+			microCount1 = (microTimer1 & 0x00ffffff) | ((value << 24) & 0xff000000);
+		}
+		else if (address == 0xfeb8) { // Millisecond RTC count byte 0
+			milliRTCCount = (microTimer1 & 0xffffff00) | (value & 0x000000ff);
+		}
+		else if (address == 0xfeb9) { // Millisecond RTC count byte 1
+			milliRTCCount = (microTimer1 & 0xffff00ff) | ((value << 8) & 0x0000ff00);
+		}
+		else if (address == 0xfeba) { // Millisecond RTC count byte 2
+			milliRTCCount = (microTimer1 & 0xff00ffff) | ((value << 16) & 0x00ff0000);
+		}
+		else if (address == 0xfebb) { // Millisecond RTC count 1 byte 3
+			milliRTCCount = (microTimer1 & 0x00ffffff) | ((value << 24) & 0xff000000);
+		}
+		else if (address == 0xfebc) { // Timer 0 flags
+			microFlags0 = value;
+			if ((value & TIMER_FLAG_LATCH) > 0) {
+				microCount0 = microTimer0;
+			}
+		}
+		else if (address == 0xfebd) { // Timer 1 flags
+			microFlags1 = value;
+			if ((value & TIMER_FLAG_LATCH) > 0) {
+				microCount0 = microTimer0;
+			}
+		}
+		else if (address == 0xfebe) { // RTC flags
+			RTCFlags = value;
+			if ((value & TIMER_FLAG_LATCH) > 0) {
+				milliRTCCount = milliRTC;
+			}
+		}
+		//endregion timers
+		//region disk
+		else if (address == 0xfed0) {
+			volumePtr = (volumePtr & 0xffff00) | (value & 0x0000ff);
+		}
+		else if (address == 0xfed1) {
+			volumePtr = (volumePtr & 0xff00ff) | ((value << 8) & 0x00ff00);
+		}
+		else if (address == 0xfed2) {
+			volumePtr = (volumePtr & 0x00ffff) | ((value << 16) & 0xff0000);
+		}
+		else if (address == 0xfed4) {
+			if (volume != null && volume.length > volumePtr) {
+				volume[volumePtr] = value;
+			}
+			volumePtr ++;
+			volumePtr &= 0xffffff;
+		}
+		//endregion disk
+		else if (address == 0xfefd) {
+			GR8EMUr3_1.inst.ttyWrite(value);
 			System.out.write(value);
 			System.out.flush();
+		}
+		else if (address == 0xfeca) {
+			try {
+				if (currentSocket != null) {
+					currentSocket.getOutputStream().write(value & 0xff);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+				currentSocket = null;
+			}
 		}
 	}
 	
@@ -306,6 +465,50 @@ public class GR8CPURev3_1 {
 		
 		//FEFC -- keyboard register
 		//FEFB -- controller register
+		//FECA -- socket test
+		//FECB -- socket accept
+		
+		if (address == 0xfefc) {
+			return GR8EMUr3_1.inst.ttyRead(notouchy);
+		}
+		else if (address == 0xfed4) {
+			byte ret = 0x00;
+			if (volume != null && volume.length > volumePtr) {
+				ret = volume[volumePtr];
+			}
+			if (!notouchy) {
+				volumePtr++;
+				volumePtr &= 0xffffff;
+			}
+			return ret;
+		}
+		else if (address == 0xfeca) {
+			try {
+				if (currentSocket != null && currentSocket.getInputStream().available() > 0) {
+					InputStream in = currentSocket.getInputStream();
+					if (notouchy) return (byte) 0xcc;
+					return (byte) in.read();
+				}
+			} catch (IOException e) {
+				currentSocket = null;
+			}
+		}
+		else if (address == 0xfecb) {
+			if (notouchy) return (byte) 0xbb;
+			if (currentSocket != null) {
+				try {
+					currentSocket.close();
+				} catch (IOException ignored) {
+				}
+			}
+			currentSocket = null;
+			try {
+				if (serverSocket != null) currentSocket = serverSocket.accept();
+				return 1;
+			} catch (IOException e) {
+				return 0;
+			}
+		}
 		
 		return 0;
 	}
@@ -340,6 +543,36 @@ public class GR8CPURev3_1 {
 		} else {
 			Arrays.fill(ram, (byte) 0);
 		}
+		
+		// Testing of sokcit.
+		try {
+			if (serverSocket != null) {
+				serverSocket.close();
+			}
+		} catch (IOException e) {
+			System.err.println("Server socket not closed.");
+		}
+		try {
+			if (currentSocket != null) {
+				currentSocket.close();
+			}
+		} catch (IOException e) {
+			System.err.println("Socket not closed.");
+		}
+		try {
+			volume = IOUtils.readBytes("D:\\logisim projects\\GR8CPU Rev3.2\\programs\\gr8nix\\simplex_test_image");
+		} catch (IOException e) {
+			e.printStackTrace();
+			volume = new byte[0];
+		}
+		volumePtr = 0;
+		serverSocket = null;
+		try {
+			serverSocket = new ServerSocket(8080 /*25564*/);
+			serverSocket.setSoTimeout(5);
+		} catch (IOException e) {
+			System.err.println("Server socket not opened.");
+		}
 	}
 	
 	public short getAddress() {
@@ -357,7 +590,7 @@ public class GR8CPURev3_1 {
 		}
 		short res = adrBus;
 		if ((ctrl & 0x00008000) > 0) { // FCX control signal
-			res += regX;
+			res += ((int) regX) & 0xff;
 		}
 		if ((ctrl & 0x08000000) > 0) { // ADC control signal
 			res++;

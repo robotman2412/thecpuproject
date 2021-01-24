@@ -1,4 +1,4 @@
-package net.scheffers.robot.gr8fstools;
+package net.scheffers.robot.simplexfs;
 
 import jutils.JUtils;
 import jutils.database.BytePool;
@@ -7,25 +7,11 @@ import processing.core.PApplet;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
-public class GR8FSTools extends PApplet {
+public class SimplexFSCommandLine {
 
     public static void main(String[] args) {
         JUtils.getArgs(args);
-        if (!JUtils.getArg("enbin").equals("null") && JUtils.getArg("mksx").equals("null") && JUtils.getArg("unbin").equals("null")) {
-            try {
-                enbin(JUtils.getArg("in"), JUtils.getArg("out"));
-            } catch (IOException e) {
-                System.err.println(e.getMessage());
-            }
-        }
-        else if (!JUtils.getArg("unbin").equals("null") && JUtils.getArg("mksx").equals("null") && JUtils.getArg("enbin").equals("null")) {
-            try {
-                unbin(JUtils.getArg("in"), JUtils.getArg("out"));
-            } catch (IOException e) {
-                System.err.println(e.getMessage());
-            }
-        }
-        else if (!JUtils.getArg("mksx").equals("null") && JUtils.getArg("enbin").equals("null") && JUtils.getArg("unbin").equals("null")) {
+        if (!JUtils.getArg("mksx").equals("null") && JUtils.getArg("unsx").equals("null")) {
             try {
                 if (JUtils.getArg("size").equals("null")) {
                     System.err.println("Error: no size declared.");
@@ -60,8 +46,6 @@ public class GR8FSTools extends PApplet {
         else
         {
             System.out.println("Options:\n" +
-                    "  -enbin    To logisim's proprietary bullshit file.\n" +
-                    "  -unbin    From logisim's proprietary bullshit file.\n" +
                     "  -mksx     Make a new simplex filesystem (-in is optional).\n" +
                     "  -unsx     Read a simplex filesystem into a directory (works for both disk image and logisim's proprietary bullshit file).\n" +
                     "  -size [s] Size of the filesystem to be made.\n" +
@@ -75,7 +59,7 @@ public class GR8FSTools extends PApplet {
     }
 
     public static void makeSimplexFS(String src, String dest) throws IOException {
-        
+
     }
 
     public static void readSimplexFS(String src, String dest) throws IOException {

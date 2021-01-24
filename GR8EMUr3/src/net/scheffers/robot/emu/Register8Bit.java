@@ -109,7 +109,7 @@ public class Register8Bit extends GUIElement implements PConstants, GR8EMUConsta
 	
 	@Override
 	public void keyPressed() {
-		if (valueUpdater == null) return;
+		if (valueUpdater == null || selected == 0) return;
 		if (selected == 1) {
 			if (p.key >= '0' && p.key <= '9') {
 				value = (value << 4) & 0xff;
