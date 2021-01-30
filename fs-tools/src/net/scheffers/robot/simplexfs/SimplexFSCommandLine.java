@@ -2,10 +2,13 @@ package net.scheffers.robot.simplexfs;
 
 import jutils.JUtils;
 import jutils.database.BytePool;
-import processing.core.PApplet;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Random;
 
 public class SimplexFSCommandLine {
 
@@ -31,16 +34,16 @@ public class SimplexFSCommandLine {
                     System.err.println("Number format was not right, did you mean:\n  -size 123KB\n  -size 123");
                     return;
                 }
-                makeSimplexFS(JUtils.getArg("in"), JUtils.getArg("out"));
-            } catch (IOException e) {
-                System.err.println(e.getMessage());
+                makeSimplexFS(JUtils.getArg("in"), JUtils.getArg("out"), blocks);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
         else if (!JUtils.getArg("unsx").equals("null") && JUtils.getArg("enbin").equals("null") && JUtils.getArg("unbin").equals("null")) {
             try {
                 readSimplexFS(JUtils.getArg("in"), JUtils.getArg("out"));
-            } catch (IOException e) {
-                System.err.println(e.getMessage());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
         else
@@ -53,17 +56,38 @@ public class SimplexFSCommandLine {
                     "            64KB - 64 kilobytes (65 536 bytes) of capacity in total. Max: 16383KB\n" +
                     "  -vn [n]   Specify volume name for filesystem to be made.\n" +
                     "  -in [f]   Input file.\n" +
-                    "  -out [f]  Output file."
+                    "  -out [f]  Output file.\n" +
+                    "  -lhf      Use logisim's proprietary bullshit file for image file format."
             );
         }
     }
 
-    public static void makeSimplexFS(String src, String dest) throws IOException {
-
+    public static void makeSimplexFS(String src, String dest, int numBlocks) throws Exception {
+        String voln = null;
+        if (!JUtils.getArg("vn").equals("null")) {
+            voln = JUtils.getArg("vn");
+        }
+        File in = null;
+        if (!src.equals("null")) {
+            in = new File(JUtils.getArg("in"));
+        }
+        if (JUtils.getArg("lhf").equals("true")) {
+            SimplexFS.makeSimplexFS(new LogisimBullshitOutputStream(new File(dest)), voln, numBlocks, (byte) 0x00, new Random().nextInt(), in);
+        }
+        else
+        {
+            SimplexFS.makeSimplexFS(new FileOutputStream(new File(dest)), voln, numBlocks, (byte) 0x00, new Random().nextInt(), in);
+        }
     }
 
-    public static void readSimplexFS(String src, String dest) throws IOException {
-
+    public static void readSimplexFS(String src, String dest) throws Exception {
+        if (JUtils.getArg("lhf").equals("true")) {
+            SimplexFS.unpackSimplexFS(new LogisimBullshitInputStream(new File(src)), new File(dest), null);
+        }
+        else
+        {
+            SimplexFS.unpackSimplexFS(new FileInputStream(new File(src)), new File(dest), null);
+        }
     }
 
     public static void enbin(String src, String dest) throws IOException {

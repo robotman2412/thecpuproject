@@ -43,6 +43,15 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	public Register16Bit regPC, regAR, stackPtr, adrBus;
 	//endregion GUI
 	
+	//region speed
+	public int speedMultiplier = 1;
+	public int speed = 1;
+	
+	public Button speedMulMHz, speedMulKHz, speedMulHz;
+	public Button speed100, speed10, speed5, speed1;
+	public Button speedMulDisabled, speedDisabled;
+	//endregion speed
+	
 	//region settings
 	public GUIScreen settingScreen;
 	
@@ -74,12 +83,16 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	public PImage pause, pauseHover, pausePressed, pauseDisabled;
 	/** Images for cycle button. */
 	public PImage cycle, cycleHover, cyclePressed, cycleDisabled;
-	/** Images for instruction button. */
-	public PImage instruction, instructionHover, instructionPressed, instructionDisabled;
+	/** Images for step over button. */
+	public PImage stepOver, stepOverHover, stepOverPressed, stepOverDisabled;
+	/** Images for step in button. */
+	public PImage stepIn, stepInHover, stepInPressed, stepInDisabled;
+	/** Images for step out button. */
+	public PImage stepOut, stepOutHover, stepOutPressed, stepOutDisabled;
 	//endregion images
 	
 	/** CPU control buttons. */
-	public TextureButton resetButton, playButton, pauseButton, cycleButton, instructionButton;
+	public TextureButton resetButton, playButton, pauseButton, cycleButton, stepOverButton, stepInButton, stepOutButton;
 	
 	/** Keyboard module. */
 	public Keyboardonator keyboard;
@@ -128,10 +141,20 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		cyclePressed = loadImage("cycle_pressed.png");
 		cycleDisabled = loadImage("cycle_disabled.png");
 		
-		instruction = loadImage("instruction.png");
-		instructionHover = loadImage("instruction_hover.png");
-		instructionPressed = loadImage("instruction_pressed.png");
-		instructionDisabled = loadImage("instruction_disabled.png");
+		stepOver = loadImage("over.png");
+		stepOverHover = loadImage("over_hover.png");
+		stepOverPressed = loadImage("over_pressed.png");
+		stepOverDisabled = loadImage("over_disabled.png");
+		
+		stepIn = loadImage("in.png");
+		stepInHover = loadImage("in_hover.png");
+		stepInPressed = loadImage("in_pressed.png");
+		stepInDisabled = loadImage("in_disabled.png");
+		
+		stepOut = loadImage("out.png");
+		stepOutHover = loadImage("out_hover.png");
+		stepOutPressed = loadImage("out_pressed.png");
+		stepOutDisabled = loadImage("out_disabled.png");
 		//endregion loading
 		
 		//region tty
@@ -162,42 +185,55 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		});
 		screen.add(resetButton);
 		
-		pauseButton = new TextureButton(this, 2 * thingyWidth + 50, 5, 40, 40, false, new TextureButtonStyle(
+		pauseButton = new TextureButton(this, 2 * thingyWidth + 45, 5, 40, 40, false, new TextureButtonStyle(
 				pause, pauseHover, pausePressed, pauseDisabled
 		), () -> emulator.doTick = false);
 		screen.add(pauseButton);
 		
-		playButton = new TextureButton(this, 2 * thingyWidth + 95, 5, 40, 40, false, new TextureButtonStyle(
+		playButton = new TextureButton(this, 2 * thingyWidth + 85, 5, 40, 40, false, new TextureButtonStyle(
 				play, playHover, playPressed, playDisabled
 		), () -> emulator.doTick = true);
 		screen.add(playButton);
 		
-		cycleButton = new TextureButton(this, 2 * thingyWidth + 140, 5, 40, 40, false, new TextureButtonStyle(
+		cycleButton = new TextureButton(this, 2 * thingyWidth + 125, 5, 40, 40, false, new TextureButtonStyle(
 				cycle, cycleHover, cyclePressed, cycleDisabled
 		), () -> emulator.forceTick++);
 		screen.add(cycleButton);
 		
-		instructionButton = new TextureButton(this, 2 * thingyWidth + 185, 5, 40, 40, false, new TextureButtonStyle(
-				instruction, instructionHover, instructionPressed, instructionDisabled
-		));
-		screen.add(instructionButton);
+		stepOverButton = new TextureButton(this, 2 * thingyWidth + 165, 5, 40, 40, false, new TextureButtonStyle(
+				stepOver, stepOverHover, stepOverPressed, stepOverDisabled
+		), () -> emulator.stepOver());
+		screen.add(stepOverButton);
+		
+		stepInButton = new TextureButton(this, 2 * thingyWidth + 205, 5, 40, 40, false, new TextureButtonStyle(
+				stepIn, stepInHover, stepInPressed, stepInDisabled
+		), () -> emulator.stepIn());
+		screen.add(stepInButton);
+		
+		stepOutButton = new TextureButton(this, 2 * thingyWidth + 245, 5, 40, 40, false, new TextureButtonStyle(
+				stepOut, stepOutHover, stepOutPressed, stepOutDisabled
+		), () -> emulator.stepOut());
+		screen.add(stepOutButton);
 		
 		keyboard = new Keyboardonator(this);
 		screen.add(keyboard);
 		//endregion control
 		
 		//region speed
-		screen.add(new Button(this, 2 * thingyWidth + 5, 50, 60, 20, "10 MHz", false, () -> emulator.setHertz(10000000)));
-		screen.add(new Button(this, 2 * thingyWidth + 5, 75, 60, 20, "1 MHz", false, () -> emulator.setHertz(1000000)));
-		screen.add(new Button(this, 2 * thingyWidth + 5, 100, 60, 20, "100 KHz", false, () -> emulator.setHertz(100000)));
-		screen.add(new Button(this, 2 * thingyWidth + 5, 125, 60, 20, "10 KHz", false, () -> emulator.setHertz(10000)));
-		screen.add(new Button(this, 2 * thingyWidth + 5, 150, 60, 20, "1 KHz", false, () -> emulator.setHertz(1000)));
+		screen.add(new Button(this, 2 * thingyWidth + 10, 50, 60, 20, "10 MHz", false, () -> emulator.setHertz(10000000)));
+		screen.add(new Button(this, 2 * thingyWidth + 10, 80, 60, 20, "1 MHz", false, () -> emulator.setHertz(1000000)));
+		screen.add(new Button(this, 2 * thingyWidth + 10, 110, 60, 20, "100 KHz", false, () -> emulator.setHertz(100000)));
+		screen.add(new Button(this, 2 * thingyWidth + 10, 140, 60, 20, "10 KHz", false, () -> emulator.setHertz(10000)));
+		screen.add(new Button(this, 2 * thingyWidth + 10, 170, 60, 20, "1 KHz", false, () -> emulator.setHertz(1000)));
 		
-		screen.add(new Button(this, 2 * thingyWidth + 70, 50, 60, 20, "100 Hz", false, () -> emulator.setHertz(100)));
-		screen.add(new Button(this, 2 * thingyWidth + 70, 75, 60, 20, "10 Hz", false, () -> emulator.setHertz(10)));
-		screen.add(new Button(this, 2 * thingyWidth + 70, 100, 60, 20, "5 Hz", false, () -> emulator.setHertz(5)));
-		screen.add(new Button(this, 2 * thingyWidth + 70, 125, 60, 20, "2 Hz", false, () -> emulator.setHertz(2)));
-		screen.add(new Button(this, 2 * thingyWidth + 70, 150, 60, 20, "1 Hz", false, () -> emulator.setHertz(1)));
+		screen.add(new Button(this, 2 * thingyWidth + 80, 50, 60, 20, "100 Hz", false, () -> emulator.setHertz(100)));
+		screen.add(new Button(this, 2 * thingyWidth + 80, 80, 60, 20, "10 Hz", false, () -> emulator.setHertz(10)));
+		screen.add(new Button(this, 2 * thingyWidth + 80, 110, 60, 20, "5 Hz", false, () -> emulator.setHertz(5)));
+		screen.add(new Button(this, 2 * thingyWidth + 80, 140, 60, 20, "2 Hz", false, () -> emulator.setHertz(2)));
+		screen.add(new Button(this, 2 * thingyWidth + 80, 170, 60, 20, "1 Hz", false, () -> emulator.setHertz(1)));
+		
+		speedMulDisabled = speedMulMHz;
+		speedDisabled = speed1;
 		//endregion speed
 		
 		//region modules
@@ -236,6 +272,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		
 		adrBus = new Register16Bit(this, 0 * thingyWidth, 0 * thingyHeight, "address bus");
 		adrBus.valueSupplier = () -> (int) emulator.instance.adrBus;
+		regIR.valueUpdater = (v) -> emulator.instance.adrBus = (short) (int) v;
 		screen.add(adrBus);
 		
 		memory = new Memory(this, 0 * thingyWidth, 1 * thingyHeight, "memory");
@@ -262,15 +299,15 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		screen.add(controlUnit);
 		//endregion modules
 		
-		settingScreen = new GUIScreen(this);
-		
 		//region settings
 		
-		selDriveFile = new Button(this, 5, 50, 100, 20, "select drive file", false,
+		selDriveFile = new Button(this, 2 * thingyWidth + 150, 50, 100, 20, "select volume", false,
 				()->selectInput("Seleft drive file...", "selectDrive")
 		);
+		screen.add(selDriveFile);
 		
-		dispDriveFile = new Text(this, 110, 60, "none selected");
+		dispDriveFile = new Text(this, 2 * thingyWidth + 260, 67, "none selected");
+		screen.add(dispDriveFile);
 		
 		//endregion settings
 		
@@ -290,13 +327,17 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 			pauseButton.enabled = emulator.doTick;
 			playButton.enabled = !emulator.doTick;
 			cycleButton.enabled = !emulator.doTick;
-			instructionButton.enabled = !emulator.doTick;
+			stepOverButton.enabled = !emulator.doTick;
+			stepInButton.enabled = !emulator.doTick;
+			stepOutButton.enabled = !emulator.doTick;
 			
 			// Draw the measured frequency.
 			textFont(font12, 12);
 			textAlign(CORNER);
 			fill(0);
-			text(getSpeeds(), 2f * thingyWidth + 20, 2.5f * thingyHeight);
+			strokeWeight(1);
+			stroke(0xff7f7f7f);
+			text(getSpeeds(), 2 * thingyWidth + 15, 207);
 			
 			// Draw the TTY.
 			rect(-ttyWidth * 7 + width - 22, -ttyHeight * 13 + height - 42, ttyWidth * 7 + 4, ttyHeight * 13 + 4);
@@ -491,7 +532,8 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	public void selectDrive(File selected) {
 		if (selected != null) {
 			driveFile = selected.getAbsolutePath();
-			
+			emulator.instance.setVolume(selected, true);
+			mousePressed = false;
 		}
 	}
 	
@@ -529,6 +571,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		public volatile boolean doTick;
 		public volatile int forceTick;
 		public volatile double currentHertz;
+		public volatile int tickMode;
 		
 		public EmuThread() {
 			instance = new GR8CPURev3_1();
@@ -605,7 +648,22 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 				}
 				nano2 = nano1;
 				nano0 = System.nanoTime();
-				int res = instance.tick(times);
+				int res;
+				if (tickMode != 0) {
+					times = tickTimes;
+					res = instance.tick(times, tickMode);
+					if (res == 7) {
+						res = 0;
+					}
+					else
+					{
+						tickMode = 0;
+					}
+				}
+				else
+				{
+					res = instance.tick(times, 0);
+				}
 				nano1 = (System.nanoTime() + 5000) / 10000 * 10000;
 				currentHertz = 1000000000d / (nano1 - nano2) * tickTimes;
 				long wait = Math.max(0, nanoWait - nano1 + nano0);
@@ -613,7 +671,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 					wait = 1;
 				}
 				long waitMs = wait / 1000000;
-				if (!doTick) {
+				if (!doTick && tickMode == 0) {
 					waitMs = 20;
 					wait = 0;
 				}
@@ -632,6 +690,18 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 					notifyAll();
 				}
 			}
+		}
+		
+		public void stepOver() {
+			tickMode = GR8CPURev3_1.TICK_STEP_OVER;
+		}
+		
+		public void stepIn() {
+			tickMode = GR8CPURev3_1.TICK_STEP_IN;
+		}
+		
+		public void stepOut() {
+			tickMode = GR8CPURev3_1.TICK_STEP_OUT;
 		}
 		
 		public void reset() {

@@ -45,7 +45,16 @@ public class Memory extends GUIElement implements GR8EMUConstants {
 		p.fill(0);
 		p.textAlign(PConstants.LEFT);
 		
-		offset = address & 0xffffff80;
+		int thingy = (selected >= 0) ? selected : address;
+		if (thingy < 32) {
+			offset = 0;
+		}
+		else if (thingy < offset + 32) {
+			offset = (thingy & 0xfff8) - 32;
+		}
+		else if (thingy > offset + 128) {
+			offset = (thingy & 0xfff8) - 128;
+		}
 		int len = 21 * 8;
 		if (offset + len >= 65536) {
 			offset = 65536 - len;
@@ -155,19 +164,27 @@ public class Memory extends GUIElement implements GR8EMUConstants {
 			val |= p.key - 'A' + 0x0a;
 		} else if (p.keyCode == PConstants.LEFT) {
 			selected--;
-			selected &= 0xffff;
+			if (selected < 0) {
+				selected = 0;
+			}
 			return;
 		} else if (p.keyCode == PConstants.RIGHT) {
 			selected++;
-			selected &= 0xffff;
+			if (selected > 0xffff) {
+				selected = 0xffff;
+			}
 			return;
 		} else if (p.keyCode == PConstants.UP) {
 			selected -= 8;
-			selected &= 0xffff;
+			if (selected < 0) {
+				selected = 0;
+			}
 			return;
 		} else if (p.keyCode == PConstants.DOWN) {
 			selected += 8;
-			selected &= 0xffff;
+			if (selected > 0xffff) {
+				selected = 0xffff;
+			}
 			return;
 		}
 		// Write.

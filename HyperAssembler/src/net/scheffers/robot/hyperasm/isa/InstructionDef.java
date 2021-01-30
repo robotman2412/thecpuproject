@@ -1,5 +1,10 @@
 package net.scheffers.robot.hyperasm.isa;
 
+import net.scheffers.robot.hyperasm.AssemblerCore;
+import net.scheffers.robot.hyperasm.expression.Expression;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 public class InstructionDef {
 
     public String[] tokenPattern;
@@ -15,13 +20,34 @@ public class InstructionDef {
         
     }
     
+    public InstructionDef(JSONObject raw, int isaWordLen) {
+	    tokenPattern = AssemblerCore.tokeniseLine(raw.getString("name"));
+	    singleWord = Expression.unhex(raw.getString("hex"));
+	    if (raw.has("args") && raw.getJSONArray("args").length() > 0) {
+            JSONArray rawArgs = raw.getJSONArray("args");
+            type = Type.ONE_WORD_WITH_ARG;
+            numArgs = rawArgs.length();
+            arguments = new ArgumentInsnPart[numArgs];
+            numWords = 1;
+            for (int i = 0; i < rawArgs.length(); i++) {
+                arguments[i] = new ArgumentInsnPart(rawArgs.getJSONObject(i).getJSONObject("type"), isaWordLen);
+                numWords += arguments[i].numWords;
+            }
+        }
+	    else
+        {
+            type = Type.ONE_WORD;
+            numArgs = 0;
+            numWords = 1;
+        }
+    }
+    
     public static InstructionDef singleWord(long insnCode, String[] tokenPattern) {
         InstructionDef def = new InstructionDef();
         def.singleWord = insnCode;
         def.tokenPattern = tokenPattern.clone();
         def.type = Type.ONE_WORD;
         def.numArgs = 0;
-        def.tokenPattern = tokenPattern;
         def.numWords = 1;
         return def;
     }
@@ -44,7 +70,7 @@ public class InstructionDef {
         def.type = Type.ONE_WORD_WITH_ARG;
         def.arguments = arguments;
         def.numArgs = arguments.length;
-        def.tokenPattern = tokenPattern;
+        def.tokenPattern = tokenPattern.clone();
         def.singleWord = insnCode;
         return def;
     }
@@ -91,6 +117,9 @@ public class InstructionDef {
             long res = resolvedArgs[x];
             long resMask = (1 << wordBits) - 1;
             if (arg.numWords == 1) {
+                if ((res & ~resMask) != 0) {
+                    new IllegalArgumentException("Double word given where single word was required!").printStackTrace();
+                }
                 out[indexial] = res & resMask;
             }
             else if (arg.isLittleEndian) {

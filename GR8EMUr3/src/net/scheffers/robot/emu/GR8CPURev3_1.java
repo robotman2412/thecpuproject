@@ -2,6 +2,7 @@ package net.scheffers.robot.emu;
 
 import jutils.IOUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
@@ -285,18 +286,25 @@ public class GR8CPURev3_1 {
 		nativeLoadSuccess = a;
 	}
 	
+	// Registers.
 	public byte regA, regB, regX, regD, regIR, bus, stage, mode;
 	public short regPC, regAR, stackPtr, adrBus, alo;
 	
+	// State.
 	public boolean flagCout, flagZero;
 	public byte[] rom;
 	public byte[] ram;
-	public short[] breakpoints;
 	public int[] isa = defaultISA;
 	
+	// Debugging.
+	public short[] breakpoints;
+	public byte skipping, skipDepth;
+	
+	// Shitty internet.
 	public Socket currentSocket;
 	public ServerSocket serverSocket;
 	
+	// Timers.
 	public long microOrigin0;
 	public long microOrigin1;
 	public int microTimer0;
@@ -309,13 +317,22 @@ public class GR8CPURev3_1 {
 	public int microFlags1;
 	public int RTCFlags;
 	
+	// Volume.
+	public int volumePtr;
+	public byte[] volume;
+	public long volumeDirtyTime;
+	public boolean doWriteVolume;
+	public File volumeFile;
+	
 	public static final int TIMER_FLAG_ENABLED = 0x80;
 	public static final int TIMER_FLAG_IRQ = 0x40;
 	public static final int TIMER_FLAG_NMI = 0x20;
 	public static final int TIMER_FLAG_LATCH = 0x01;
 	
-	public int volumePtr;
-	public byte[] volume;
+	public static final int TICK_NORMAL		= 0x00000000; // Step one CPU cycle.
+	public static final int TICK_STEP_OVER	= 0x00014a4b; // Step over opcode subroutine.
+	public static final int TICK_STEP_IN	= 0x00020000; // Step one instruction normally.
+	public static final int TICK_STEP_OUT	= 0x00034a4b; // Step over out subroutine.
 	
 	public void writeMMIO(int address, byte value) {
 		address &= 0xffff;
@@ -435,6 +452,9 @@ public class GR8CPURev3_1 {
 		else if (address == 0xfed4) {
 			if (volume != null && volume.length > volumePtr) {
 				volume[volumePtr] = value;
+				if (doWriteVolume && volumeDirtyTime == 0) {
+					volumeDirtyTime = System.currentTimeMillis();
+				}
 			}
 			volumePtr ++;
 			volumePtr &= 0xffffff;
@@ -513,20 +533,70 @@ public class GR8CPURev3_1 {
 		return 0;
 	}
 	
-	public int tick(int tickTimes) {
+	public int tick(int tickTimes, int tickMode) {
+		int ret;
 		if (nativeLoadSuccess) {
-			return nativeTick(tickTimes);
+			ret = nativeTick(tickTimes, tickMode);
 		} else {
 			//TODO: slower pure java impl
-			return -1;
+			ret = -1;
 		}
+		if (volumeDirtyTime != 0 && System.currentTimeMillis() > volumeDirtyTime + 3000) {
+			volumeDirtyTime = 0;
+			final byte[] dup = new byte[volume.length];
+			new Thread(() -> {
+				try {
+					IOUtils.saveBytes(volumeFile, dup);
+					System.out.println("Volume flushed to disk.");
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				System.gc();
+			}).start();
+		}
+		return ret;
 	}
 	
 	public int preTick() {
-		return tick(0);
+		return tick(0, TICK_NORMAL);
 	}
 	
-	protected native int nativeTick(int tickTimes);
+	public void setVolume(File location, boolean isReadOnly) {
+		if (volumeFile != null && volumeFile.exists() && doWriteVolume) {
+			synchronized (this) {
+				volumeDirtyTime = 0;
+				try {
+					IOUtils.saveBytes(volumeFile, volume);
+					System.out.println("Old volume flushed to disk.");
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		if (location == null) {
+			volume = new byte[0];
+			System.out.println("Volume removed.");
+			doWriteVolume = false;
+		}
+		else if (!location.exists()) {
+			volume = new byte[0];
+			System.out.println("Error: No such file.");
+			doWriteVolume = false;
+		}
+		else
+		{
+			try {
+				volume = IOUtils.readBytes(location);
+				System.out.println("Volume changed.");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			doWriteVolume = !isReadOnly;
+		}
+	}
+	
+	protected native int nativeTick(int tickTimes, int tickMode);
 	
 	public void reset() {
 		regA = regB = regX = regD = regIR = bus = stage = 0;
@@ -559,13 +629,8 @@ public class GR8CPURev3_1 {
 		} catch (IOException e) {
 			System.err.println("Socket not closed.");
 		}
-		try {
-			volume = IOUtils.readBytes("D:\\logisim projects\\GR8CPU Rev3.2\\programs\\gr8nix\\simplex_test_image");
-		} catch (IOException e) {
-			e.printStackTrace();
-			volume = new byte[0];
-		}
 		volumePtr = 0;
+		
 		serverSocket = null;
 		try {
 			serverSocket = new ServerSocket(8080 /*25564*/);

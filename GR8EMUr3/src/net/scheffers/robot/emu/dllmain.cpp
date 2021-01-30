@@ -44,7 +44,7 @@ void gr8cpu_mmio_write(uint16_t address, uint8_t value) {
     env->CallVoidMethod(inst, mthRead, (jint) address, (jbyte) value);
 }
 
-JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick(JNIEnv *env, jobject inst, jint nCycles) {
+JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick(JNIEnv *env, jobject inst, jint nCycles, jint tickMode) {
     currentEnv = env;
     currentInst = inst;
     jclass instanceClass = env->GetObjectClass(inst);
@@ -73,6 +73,8 @@ JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick(JNI
     jfieldID fldRam = env->GetFieldID(instanceClass, "ram", "[B");
 
     jfieldID fldBrks = env->GetFieldID(instanceClass, "breakpoints", "[S");
+    jfieldID fldSkip = env->GetFieldID(instanceClass, "skipping", "B");
+    jfieldID fldSkipDepth = env->GetFieldID(instanceClass, "skipDepth", "B");
 
     jfieldID fldIsa = env->GetFieldID(instanceClass, "isa", "[I");
 
@@ -97,6 +99,9 @@ JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick(JNI
     cpu.flagCout = env->GetBooleanField(inst, fldFlagCout);
     cpu.flagZero = env->GetBooleanField(inst, fldFlagZero);
 
+    cpu.skipping = env->GetByteField(inst, fldSkip);
+    cpu.skipDepth = env->GetShortField(inst, fldSkipDepth);
+
     jbyteArray ramArr = (jbyteArray) env->GetObjectField(inst, fldRam);
     jbyteArray romArr = (jbyteArray) env->GetObjectField(inst, fldRom);
     jshortArray brksArr = (jshortArray) env->GetObjectField(inst, fldBrks);
@@ -114,7 +119,7 @@ JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick(JNI
     cpu.breakpoints = (uint16_t *) env->GetShortArrayElements(brksArr, NULL);
     cpu.isaRom = (uint32_t *) env->GetIntArrayElements(isaArr, NULL);
 
-    int res = gr8cpurev3_tick(&cpu, nCycles);
+    int res = gr8cpurev3_tick(&cpu, nCycles, tickMode);
 
     env->ReleaseByteArrayElements(ramArr, (jbyte *) cpu.ram, 0);
     env->ReleaseByteArrayElements(romArr, (jbyte *) cpu.rom, 0);
@@ -140,7 +145,10 @@ JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick(JNI
     env->SetBooleanField(inst, fldFlagCout, cpu.flagCout);
     env->SetBooleanField(inst, fldFlagZero, cpu.flagZero);
 
-    _flushall();
+    env->SetByteField(inst, fldSkip, cpu.skipping);
+    env->SetShortField(inst, fldSkipDepth, cpu.skipDepth);
+
+    //_flushall();
 
     return res;
 }

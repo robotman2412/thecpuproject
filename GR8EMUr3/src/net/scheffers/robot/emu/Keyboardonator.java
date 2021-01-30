@@ -15,6 +15,13 @@ public class Keyboardonator extends GUIElement implements GR8EMUConstants {
 	
 	@Override
 	public void render() {
+		if (selected) {
+			p.strokeWeight(3);
+			p.stroke(0xff60afff);
+		} else {
+			p.strokeWeight(1);
+			p.stroke(0xff7f7f7f);
+		}
 		width = GR8EMUr3_1.inst.ttyWidth * 7 + 4;
 		x = p.width - width - 18;
 		y = p.height - height - 10;

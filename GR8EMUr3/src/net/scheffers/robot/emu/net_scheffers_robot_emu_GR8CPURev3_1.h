@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     net_scheffers_robot_emu_GR8CPURev3_1
  * Method:    nativeTick
- * Signature: (I)I
+ * Signature: (I)II
  */
 JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick
-  (JNIEnv *, jobject, jint);
+  (JNIEnv *, jobject, jint, jint);
 
 #ifdef __cplusplus
 }

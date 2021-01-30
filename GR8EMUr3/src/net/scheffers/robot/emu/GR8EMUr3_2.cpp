@@ -57,16 +57,150 @@ Outputs 16-bit:
 
 */
 
+#define CALL_OPCODE 0x4a
+#define RETURN_OPCODE 0x4b
+
+#define MODE_EXEC 0x00
+#define MODE_LOAD 0x01
+#define MODE_IRQ  0x02
+#define MODE_NMI  0x03
+
+#define SKIP_STEP_OVER 0x01
+#define SKIP_STEP_OUT 0x02
+#define SKIP_STEP_OUT_OVER 0x03
+
+#define MAX_INSN_LEN 16
+
 extern uint8_t gr8cpu_mmio_read(uint16_t address, bool notouchy);
 extern void gr8cpu_mmio_write(uint16_t address, uint8_t value);
 
-int gr8cpurev3_tick(gr8cpurev3_t *cpu, int maxTicks) {
-	for (int i = 0; i < maxTicks; i++) {
-		int a = gr8cpurev3_pretick(cpu);
-		if (a != EXC_NORM) return a;
-		a = gr8cpurev3_posttick(cpu);
-		if (a != EXC_NORM) return a;
+int gr8cpurev3_tick(gr8cpurev3_t *cpu, int maxTicks, int tickOp) {
+	int tickMode = tickOp >> 16;
+	int tickArgRts  = tickOp & 0xff;
+	int tickArgJsr  = (tickOp >> 8) & 0xff;
+	int a;
+	if (tickMode != TICK_NORMAL && maxTicks < MAX_INSN_LEN) {
+		// Ensure there is always enough cycles to complete at least one instruction.
+		maxTicks = MAX_INSN_LEN;
 	}
+	if (cpu->skipping == SKIP_STEP_OVER) {
+		// If we're still busy skipping, continue here instead of doing anything else.
+		int i = 0;
+		do {
+			if (i >= maxTicks) {
+				cpu->skipping = SKIP_STEP_OVER;
+				a = gr8cpurev3_pretick(cpu);
+				if (a != EXC_NORM) return a;
+				return EXC_TCON;
+			}
+			a = gr8cpurev3_pretick(cpu);
+			if (a != EXC_NORM) return a;
+			a = gr8cpurev3_posttick(cpu);
+			if (a != EXC_NORM) return a;
+			if (cpu->mode == MODE_LOAD && cpu->stage == 0 && (cpu->regIR & 0x7f) == tickArgRts) {
+				// Decrement depth after return instruction.
+				cpu->skipDepth --;
+			}
+			if (cpu->mode == MODE_LOAD && cpu->stage == 0 && (cpu->regIR & 0x7f) == tickArgJsr) {
+				// Increment depth after return instruction.
+				cpu->skipDepth ++;
+			}
+			i ++;
+		} while (cpu->skipDepth > 0);
+		cpu->skipping = 0;
+	}
+	else if(tickMode == TICK_STEP_OVER) {
+		/* Step over instruction if it is the specified variant. */
+		int i = 0;
+		// Finish at least one instruction.
+		for (; i < maxTicks; i++) {
+			a = gr8cpurev3_pretick(cpu);
+			if (a != EXC_NORM) return a;
+			a = gr8cpurev3_posttick(cpu);
+			if (a != EXC_NORM) return a;
+			if (cpu->mode == MODE_LOAD && cpu->stage == 0) {
+				// Stop if the instruction has finished.
+				break;
+			}
+		}
+		// If the instruction matches the one to skip, execute until the PC matches again.
+		if ((cpu->regIR & 0x7f) == tickArgJsr) {
+			cpu->skipDepth = 1;
+			do {
+				if (i >= maxTicks) {
+					cpu->skipping = SKIP_STEP_OVER;
+					a = gr8cpurev3_pretick(cpu);
+					if (a != EXC_NORM) return a;
+					return EXC_TCON;
+				}
+				a = gr8cpurev3_pretick(cpu);
+				if (a != EXC_NORM) return a;
+				a = gr8cpurev3_posttick(cpu);
+				if (a != EXC_NORM) return a;
+				if (cpu->mode == MODE_LOAD && cpu->stage == 0 && (cpu->regIR & 0x7f) == tickArgRts) {
+					// Decrement depth after return instruction.
+					cpu->skipDepth --;
+				}
+				if (cpu->mode == MODE_LOAD && cpu->stage == 0 && (cpu->regIR & 0x7f) == tickArgJsr) {
+					// Increment depth after return instruction.
+					cpu->skipDepth ++;
+				}
+				i ++;
+			} while (cpu->skipDepth > 0);
+			cpu->skipping = 0;
+		}
+	}
+	else if (tickMode == TICK_STEP_IN) {
+		/* Single instruction. */
+		for (int i = 0; i < maxTicks; i++) {
+			a = gr8cpurev3_pretick(cpu);
+			if (a != EXC_NORM) return a;
+			a = gr8cpurev3_posttick(cpu);
+			if (a != EXC_NORM) return a;
+			if (cpu->mode == MODE_LOAD && cpu->stage == 0) {
+				// If mode is MODE_LOAD and stage is 0, then an instruction has finished executing.
+				break;
+			}
+		}
+	}
+	else if (tickMode == TICK_STEP_OUT) {
+		/* Run instructions until return instruction is hit. */
+		int i = 0;
+		cpu->skipDepth = 1;
+		do {
+			if (i >= maxTicks) {
+				cpu->skipping = SKIP_STEP_OVER;
+				a = gr8cpurev3_pretick(cpu);
+				if (a != EXC_NORM) return a;
+				return EXC_TCON;
+			}
+			a = gr8cpurev3_pretick(cpu);
+			if (a != EXC_NORM) return a;
+			a = gr8cpurev3_posttick(cpu);
+			if (a != EXC_NORM) return a;
+			if (cpu->mode == MODE_LOAD && cpu->stage == 0 && (cpu->regIR & 0x7f) == tickArgRts) {
+				// Decrement depth after return instruction.
+				cpu->skipDepth --;
+			}
+			if (cpu->mode == MODE_LOAD && cpu->stage == 0 && (cpu->regIR & 0x7f) == tickArgJsr) {
+				// Increment depth after return instruction.
+				cpu->skipDepth ++;
+			}
+			i ++;
+		} while (cpu->skipDepth > 0);
+		cpu->skipping = 0;
+	}
+	else
+	{
+		/* Normal tick. */
+		for (int i = 0; i < maxTicks; i++) {
+			a = gr8cpurev3_pretick(cpu);
+			if (a != EXC_NORM) return a;
+			a = gr8cpurev3_posttick(cpu);
+			if (a != EXC_NORM) return a;
+		}
+	}
+	/* Pretick so that the emulator gets to see the right thing. */
 	return gr8cpurev3_pretick(cpu);
 }
 
@@ -201,7 +335,7 @@ void gr8cpurev3_do_alu(gr8cpurev3_t *cpu, int ctrl) {
 
 // Gets the state of the bus ready.
 int gr8cpurev3_pretick(gr8cpurev3_t *cpu) {
-	int ctrl, ctrlAddr;
+	uint32_t ctrl, ctrlAddr;
 	if (cpu->mode == 0) {
 		ctrlAddr = ((cpu->regIR & 0x7F) << 4) | cpu->stage;
 	}
@@ -299,7 +433,7 @@ int gr8cpurev3_pretick(gr8cpurev3_t *cpu) {
 		cpu->bus = (cpu->stackPtr >> 8) & 0x00ff;
 		break;
 	case (_O_ALO):
-		cpu->bus = cpu->alo;
+		cpu->bus = (uint8_t) (cpu->alo & 0xff);
 		break;
 	case (_O_FROB):
 		//TODO: flags
@@ -317,7 +451,7 @@ int gr8cpurev3_pretick(gr8cpurev3_t *cpu) {
 
 // Applies changes in states.
 int gr8cpurev3_posttick(gr8cpurev3_t *cpu) {
-	int ctrl, ctrlAddr;
+	uint32_t ctrl, ctrlAddr;
 	if (cpu->mode == 0) {
 		ctrlAddr = ((cpu->regIR & 0x7F) << 4) | cpu->stage;
 	}

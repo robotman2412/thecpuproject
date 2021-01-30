@@ -1,12 +1,14 @@
 package net.scheffers.robot.hyperasm;
 
 import net.scheffers.robot.hyperasm.isa.InstructionDef;
+import net.scheffers.robot.hyperasm.isa.InstructionSet;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class Pass1Out extends Pass0Out {
 	
+	public InstructionSet isa;
 	public long totalLength;
 	public long[] lineStartAddresses;
 	public long[] lineLengths;

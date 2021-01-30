@@ -24,6 +24,34 @@ public class AssemblerCore {
 	public static Charset IBM437 = Charset.forName("IBM437");
 	
 	public static void main(String[] args) {
+		realAssemblyTest();
+	}
+	
+	public static void realAssemblyTest() {
+		try {
+			InstructionSet isa = new InstructionSet(new File("D:\\logisim projects\\GR8CPU Rev3.2\\IS\\ISAx.json"));
+			Pass2Out out = simpleFullAssemble("D:\\logisim projects\\GR8CPU Rev3.2\\programs\\gr8nix\\gr8nix.asm", isa);
+			
+			for (CompilerWarning warning : out.warnings) {
+				System.out.println(warning.source);
+				System.out.println(warning.getMessage());
+				System.out.println();
+			}
+			
+			for (CompilerError error : out.errors) {
+				System.err.println(error.source);
+				System.err.println(error.getMessage());
+				System.err.println();
+			}
+			
+			out.saveLHF(new File("D:\\logisim projects\\GR8CPU Rev3.2\\programs\\gr8nix\\gr8nix.test.hex"));
+			out.saveOldDump(new File("D:\\logisim projects\\GR8CPU Rev3.2\\programs\\gr8nix\\gr8nix.test.hex.dump"));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void simpleAssemblyTest() {
 		InstructionSet isa = new InstructionSet();
 		isa.wordBits = 8;
 		isa.instructions = new InstructionDef[] {
@@ -41,6 +69,7 @@ public class AssemblerCore {
 	}
 	
 	public static String[] tokeniseLine(String raw) {
+		// This is sort of legacy code, but i need it.
 		raw = raw.replaceAll(" ", "\t");
 		StringBuilder s = new StringBuilder();
 		String[] splitTokens = "# @ + - * = / , ( )".split(" ");
@@ -157,10 +186,10 @@ public class AssemblerCore {
 		List<CompilerError> errors = new ArrayList<>();
 		List<CompilerWarning> warnings = new ArrayList<>();
 		boolean removePrefixPadding = false;
-		boolean importsLeft = false;
+		boolean importsLeft;
 		//boolean removeSuffixPadding = false;
 		
-		//"import" the mail assembly file
+		//"import" the main assembly file
 		for (int i = 0; i < tokensOut.size(); i++) {
 			sourceNamesOut.add(sourceNameIn);
 			lineNumbersOut.add(i + 1);
@@ -168,6 +197,7 @@ public class AssemblerCore {
 		
 		//import assembly files
 		do {
+			importsLeft = false;
 			for (int i = 0; i < tokensOut.size(); i++) {
 				String[] tokens = tokensOut.get(i);
 				if (tokens.length == 0) {
@@ -243,6 +273,7 @@ public class AssemblerCore {
 		long currentAddress = 0;
 		int nLines = in.tokensOut.length;
 		Pass1Out out = new Pass1Out(in, nLines);
+		out.isa = isa;
 		for_pass1: for (int i = 0; i < nLines; i++) {
 			out.lineStartAddresses[i] = currentAddress;
 			String[] line = out.tokensOut[i];
@@ -274,7 +305,7 @@ public class AssemblerCore {
 							"Invalid label name, please pick another."
 					));
 					continue;
-				} else if (line.length == 1) {
+				} else if (line.length == 1 || !line[1].equals("=")) {
 					if (out.labels.containsKey(line[0])) {
 						Label label = out.labels.get(line[0]);
 						label.address = currentAddress;
@@ -290,7 +321,7 @@ public class AssemblerCore {
 					} else {
 						out.labels.put(line[0], new Label(out.tokensSourceFiles[i], out.tokenLineNums[i], currentAddress, false));
 					}
-				} else if (line.length < 3) {
+				} else if (line.length == 2) {
 					out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i],
 							"Please insert an expression."
 					));
@@ -325,17 +356,38 @@ public class AssemblerCore {
 							// We need to know the string's length.
 							if (bullshite.length > 1) {
 								out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i]));
+								currentAddress += lengthyBoie;
 								continue for_pass1;
 							}
 							long[] str = Expression.unescapeAnother(bullshite[0].substring(1, bullshite[0].length() - 1), stringCharset);
-							currentAddress += str.length;
+							lengthyBoie += str.length;
 						}
 						else
 						{
-							currentAddress ++;
+							lengthyBoie ++;
+						}
+					}
+					else if (x == line.length - 1) {
+						String[] bullshite = new String[x - lastIndex + 1];
+						System.arraycopy(line, lastIndex, bullshite, 0, bullshite.length);
+						if (bullshite[0].charAt(0) == '"' || bullshite[0].charAt(0) == '\'') {
+							// We need to know the string's length.
+							if (bullshite.length > 1) {
+								out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i]));
+								currentAddress += lengthyBoie;
+								continue for_pass1;
+							}
+							long[] str = Expression.unescapeAnother(bullshite[0].substring(1, bullshite[0].length() - 1), stringCharset);
+							lengthyBoie += str.length;
+						}
+						else
+						{
+							lengthyBoie ++;
 						}
 					}
 				}
+				out.lineLengths[i] = lengthyBoie;
+				currentAddress += lengthyBoie;
 			}
 			else if (line.length > 1 && line[1].equalsIgnoreCase("reserve")) {
 				String[] tokenyBoys = new String[line.length - 2];
@@ -362,16 +414,22 @@ public class AssemblerCore {
 					));
 					continue;
 				}
+				if (line.length >= 4 && line[3].startsWith("'")) {
+					int a = 0;
+				}
 				for_insnsearch: for (InstructionDef def : toCheck) {
 					int indexial = 1;
 					int argIndexial = 0;
+					out.lineInsnArgs[i] = new String[def.numArgs];
 					for (int x = 0; x < def.tokenPattern.length; x++) {
 						if (indexial >= line.length) {
 							continue for_insnsearch; //this can't be a match
 						}
-						out.lineInsnArgs[i] = new String[def.numArgs];
 						//TODO: allow expressions in instruction
 						if (def.tokenPattern[x].equals("%")) {
+							if (!Expression.isValidToken(line[indexial], out, i)) {
+								continue for_insnsearch; //this can't be a match
+							}
 							//any token will pass for now, this will change with expressions in instructions
 							out.lineInsnArgs[i][argIndexial] = line[indexial];
 							argIndexial ++;
@@ -381,11 +439,13 @@ public class AssemblerCore {
 						}
 						indexial ++;
 					}
-					//we have found a match
-					out.lineInsns[i] = def;
-					out.lineLengths[i] = def.numWords;
-					currentAddress += def.numWords;
-					continue for_pass1;
+					if (indexial >= line.length) {
+						//we have found a match
+						out.lineInsns[i] = def;
+						out.lineLengths[i] = def.numWords;
+						currentAddress += def.numWords;
+						continue for_pass1;
+					}
 				}
 				//we have found no match
 				StringBuilder builder = new StringBuilder();
@@ -411,10 +471,68 @@ public class AssemblerCore {
 	 * @return the final program and data needed to build an assembly dump
 	 */
 	public static Pass2Out pass2(Pass1Out in, InstructionSet isa, Charset stringCharset) {
-		int nLines = in.tokensOut.length;
-		Pass2Out out = new Pass2Out(in, nLines);
+		Pass2Out out = new Pass2Out(in);
 		out.wordsOut = new long[(int) out.totalLength];
-		for (int i = 0; i < nLines; i++) {
+		for_pass2: for (int i = 0; i < out.tokensOut.length; i++) {
+			String[] line = out.tokensOut[i];
+			if (line.length > 1 && line[1].toLowerCase().matches("data|byte|bytes")) {
+				int lengthyBoie = 0;
+				int lastIndex = 2;
+				long currentAddress = out.lineStartAddresses[i];
+				for (int x = 2; x < line.length; x++) {
+					if (line[x].equals(",")) {
+						if (x - lastIndex < 1) {
+							out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i], "Expected data."));
+							continue for_pass2;
+						}
+						String[] bullshite = new String[x - lastIndex];
+						System.arraycopy(line, lastIndex, bullshite, 0, bullshite.length);
+						if (bullshite[0].charAt(0) == '"' || bullshite[0].charAt(0) == '\'') {
+							// We need to know the string's length.
+							if (bullshite.length > 1) {
+								continue for_pass2;
+							}
+							long[] str = Expression.unescapeAnother(bullshite[0].substring(1, bullshite[0].length() - 1), stringCharset);
+							System.arraycopy(str, 0, out.wordsOut, (int) currentAddress, str.length);
+							currentAddress += str.length;
+						}
+						else
+						{
+							try {
+								long[] res = Expression.resolve("", bullshite, out, i);
+								System.arraycopy(res, 0, out.wordsOut, (int) currentAddress, res.length);
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+							currentAddress ++;
+						}
+					}
+					else if (x == line.length - 1) {
+						String[] bullshite = new String[x - lastIndex + 1];
+						System.arraycopy(line, lastIndex, bullshite, 0, bullshite.length);
+						if (bullshite[0].charAt(0) == '"' || bullshite[0].charAt(0) == '\'') {
+							// We need to know the string's length.
+							if (bullshite.length > 1) {
+								continue for_pass2;
+							}
+							long[] str = Expression.unescapeAnother(bullshite[0].substring(1, bullshite[0].length() - 1), stringCharset);
+							System.arraycopy(str, 0, out.wordsOut, (int) currentAddress, str.length);
+							currentAddress += str.length;
+						}
+						else
+						{
+							try {
+								long[] res = Expression.resolve("", bullshite, out, i);
+								System.arraycopy(res, 0, out.wordsOut, (int) currentAddress, res.length);
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+							currentAddress ++;
+						}
+					}
+				}
+				continue;
+			}
 			if (out.lineInsns[i] == null) {
 				continue;
 			}

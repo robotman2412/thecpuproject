@@ -2,6 +2,7 @@ package net.scheffers.robot.hyperasm;
 
 import net.scheffers.robot.hyperasm.exception.CompilerError;
 import net.scheffers.robot.hyperasm.exception.CompilerWarning;
+import net.scheffers.robot.hyperasm.isa.InstructionSet;
 
 import java.util.List;
 

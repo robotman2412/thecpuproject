@@ -1,5 +1,7 @@
 package net.scheffers.robot.hyperasm.isa;
 
+import org.json.JSONObject;
+
 public class ArgumentInsnPart {
     
     public int numWords;
@@ -12,6 +14,12 @@ public class ArgumentInsnPart {
     public  ArgumentInsnPart(int numWords, boolean isLittleEndian) {
         this.numWords = numWords;
         this.isLittleEndian = isLittleEndian;
+    }
+    
+    public ArgumentInsnPart(JSONObject jsonObject, int wordSize) {
+        int bits = jsonObject.getInt("bits");
+        numWords = (bits + wordSize - 1) / wordSize;
+        isLittleEndian = jsonObject.getBoolean("is_little_endian");
     }
     
 }
