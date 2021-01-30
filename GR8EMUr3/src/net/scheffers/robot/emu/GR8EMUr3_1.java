@@ -7,9 +7,9 @@ import processing.core.PApplet;
 import processing.core.PFont;
 import processing.core.PImage;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
 
 public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	
@@ -107,54 +107,84 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	/** Whether or not the settings thingy is open. */
 	public boolean settings;
 	
+	//region resources
+	public static PImage loadJarImage(String resource) {
+		try {
+			InputStream stream = GR8EMUr3_1.class.getClassLoader().getResourceAsStream("emu_resources/" + resource);
+			if (stream == null) {
+				throw new FileNotFoundException(resource);
+			}
+			BufferedImage image = ImageIO.read(stream);
+			stream.close();
+			return new PImage(image);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static PFont loadJarFont(String resource) {
+		try {
+			InputStream stream = GR8EMUr3_1.class.getClassLoader().getResourceAsStream("emu_resources/" + resource);
+			if (stream == null) {
+				throw new FileNotFoundException(resource);
+			}
+			return new PFont(stream);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	//enregion resources
+	
 	@Override
 	@SuppressWarnings("all")
 	public void setup() {
 		inst = this;
-		font12 = loadFont("font12.vlw");
-		font48 = loadFont("font48.vlw");
 		
 		emulator = new EmuThread();
 		emulator.setHertz(1000000);
 		emulator.doTick = false;
 		emulator.reset();
-		emulator.start();
 		
 		//region loading
-		reset = loadImage("reset.png");
-		resetHover = loadImage("reset_hover.png");
-		resetPressed = loadImage("reset_pressed.png");
-		resetDisabled = loadImage("reset_disabled.png");
+		font12 = loadJarFont("font12.vlw");
+		font48 = loadJarFont("font48.vlw");
 		
-		play = loadImage("play.png");
-		playHover = loadImage("play_hover.png");
-		playPressed = loadImage("play_pressed.png");
-		playDisabled = loadImage("play_disabled.png");
+		reset = loadJarImage("reset.png");
+		resetHover = loadJarImage("reset_hover.png");
+		resetPressed = loadJarImage("reset_pressed.png");
+		resetDisabled = loadJarImage("reset_disabled.png");
 		
-		pause = loadImage("pause.png");
-		pauseHover = loadImage("pause_hover.png");
-		pausePressed = loadImage("pause_pressed.png");
-		pauseDisabled = loadImage("pause_disabled.png");
+		play = loadJarImage("play.png");
+		playHover = loadJarImage("play_hover.png");
+		playPressed = loadJarImage("play_pressed.png");
+		playDisabled = loadJarImage("play_disabled.png");
 		
-		cycle = loadImage("cycle.png");
-		cycleHover = loadImage("cycle_hover.png");
-		cyclePressed = loadImage("cycle_pressed.png");
-		cycleDisabled = loadImage("cycle_disabled.png");
+		pause = loadJarImage("pause.png");
+		pauseHover = loadJarImage("pause_hover.png");
+		pausePressed = loadJarImage("pause_pressed.png");
+		pauseDisabled = loadJarImage("pause_disabled.png");
 		
-		stepOver = loadImage("over.png");
-		stepOverHover = loadImage("over_hover.png");
-		stepOverPressed = loadImage("over_pressed.png");
-		stepOverDisabled = loadImage("over_disabled.png");
+		cycle = loadJarImage("cycle.png");
+		cycleHover = loadJarImage("cycle_hover.png");
+		cyclePressed = loadJarImage("cycle_pressed.png");
+		cycleDisabled = loadJarImage("cycle_disabled.png");
 		
-		stepIn = loadImage("in.png");
-		stepInHover = loadImage("in_hover.png");
-		stepInPressed = loadImage("in_pressed.png");
-		stepInDisabled = loadImage("in_disabled.png");
+		stepOver = loadJarImage("over.png");
+		stepOverHover = loadJarImage("over_hover.png");
+		stepOverPressed = loadJarImage("over_pressed.png");
+		stepOverDisabled = loadJarImage("over_disabled.png");
 		
-		stepOut = loadImage("out.png");
-		stepOutHover = loadImage("out_hover.png");
-		stepOutPressed = loadImage("out_pressed.png");
-		stepOutDisabled = loadImage("out_disabled.png");
+		stepIn = loadJarImage("in.png");
+		stepInHover = loadJarImage("in_hover.png");
+		stepInPressed = loadJarImage("in_pressed.png");
+		stepInDisabled = loadJarImage("in_disabled.png");
+		
+		stepOut = loadJarImage("out.png");
+		stepOutHover = loadJarImage("out_hover.png");
+		stepOutPressed = loadJarImage("out_pressed.png");
+		stepOutDisabled = loadJarImage("out_disabled.png");
 		//endregion loading
 		
 		//region tty
@@ -311,6 +341,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		
 		//endregion settings
 		
+		emulator.start();
 		//surface.setResizable(true);
 	}
 	
