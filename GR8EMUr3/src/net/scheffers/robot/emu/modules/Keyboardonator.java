@@ -1,6 +1,8 @@
-package net.scheffers.robot.emu;
+package net.scheffers.robot.emu.modules;
 
 import jutils.guiv2.GUIElement;
+import net.scheffers.robot.emu.GR8EMUConstants;
+import net.scheffers.robot.emu.GR8EMUr3_1;
 import processing.core.PApplet;
 import processing.core.PConstants;
 

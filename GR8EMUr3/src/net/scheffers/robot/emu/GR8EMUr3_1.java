@@ -3,6 +3,11 @@ package net.scheffers.robot.emu;
 import jutils.database.BytePool;
 import jutils.gui.style.TextureButtonStyle;
 import jutils.guiv2.*;
+import net.scheffers.robot.emu.modules.*;
+import net.scheffers.robot.hyperasm.AssemblerCore;
+import net.scheffers.robot.hyperasm.Pass2Out;
+import net.scheffers.robot.hyperasm.isa.InstructionSet;
+import org.json.JSONObject;
 import processing.core.PApplet;
 import processing.core.PFont;
 import processing.core.PImage;
@@ -26,20 +31,26 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		PApplet.main(GR8EMUr3_1.class.getName());
 	}
 	
+	public GR8EMUr3_1() {
+		emulator = new EmuThread();
+	}
+	
 	@Override
 	public void settings() {
 		size(921, 601);
 	}
 	
-	public EmuThread emulator;
+	public Debugger debugger;
+	public final EmuThread emulator;
 	public static PFont font12;
 	public static PFont font48;
 	public static GR8EMUr3_1 inst;
 	
 	//region GUI
 	public GUIScreen screen;
-	public Register8Bit regA, regB, regX, regD, regIR, bus;
+	public Register8Bit regA, regB, regX, regY, regIR, bus;
 	public ArithmeticLogicUnit alu;
+	public RegisterFlags regF;
 	public Register16Bit regPC, regAR, stackPtr, adrBus;
 	//endregion GUI
 	
@@ -55,56 +66,104 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	//region settings
 	public GUIScreen settingScreen;
 	
-	/** Select file mapped to virtual drive. */
+	/**
+	 * Select file mapped to virtual drive.
+	 */
 	public Button selDriveFile;
-	/** File mapped to virtual drive. */
+	/**
+	 * File mapped to virtual drive.
+	 */
 	public String driveFile;
-	/** File mapped to virtual drive. */
+	/**
+	 * File mapped to virtual drive.
+	 */
 	public Text dispDriveFile;
+	/**
+	 * File mapped to virtual drive.
+	 */
+	public Button ejectDrive;
 	
-	/** Memory mapped IO address inputs. */
+	/**
+	 * Memory mapped IO address inputs.
+	 */
 	public TextInput mmioTTY, mmioKeyboard, mmioDriveAddr, mmioDrivePort;
-	/** Memory mapped IO addresses. */
+	/**
+	 * Memory mapped IO addresses.
+	 */
 	public int mmioAdrTTY, mmioAdrKeyboard, mmioAdrDriveAddr, mmioAdrDrivePort;
-	/** Memory mapped IO default addresses. */
+	/**
+	 * Memory mapped IO default addresses.
+	 */
 	public static final int mmioDefTTY = 0xfefd, mmioDefKeyboard = 0xfefc, mmioDefDriveAddr = 0xfed0, mmioDefDrivePort = 0xfed4;
 	//endregion settings
 	
-	/** Memory available to the CPU. */
+	/**
+	 * Memory available to the CPU.
+	 */
 	public Memory memory, rom;
 	public ControlUnit controlUnit;
 	
 	//region images
-	/** Images for RESET button. */
+	/**
+	 * Images for RESET button.
+	 */
 	public PImage reset, resetHover, resetPressed, resetDisabled;
-	/** Images for play button. */
+	/**
+	 * Images for play button.
+	 */
 	public PImage play, playHover, playPressed, playDisabled;
-	/** Images for pause button. */
+	/**
+	 * Images for pause button.
+	 */
 	public PImage pause, pauseHover, pausePressed, pauseDisabled;
-	/** Images for cycle button. */
+	/**
+	 * Images for cycle button.
+	 */
 	public PImage cycle, cycleHover, cyclePressed, cycleDisabled;
-	/** Images for step over button. */
+	/**
+	 * Images for step over button.
+	 */
 	public PImage stepOver, stepOverHover, stepOverPressed, stepOverDisabled;
-	/** Images for step in button. */
+	/**
+	 * Images for step in button.
+	 */
 	public PImage stepIn, stepInHover, stepInPressed, stepInDisabled;
-	/** Images for step out button. */
+	/**
+	 * Images for step out button.
+	 */
 	public PImage stepOut, stepOutHover, stepOutPressed, stepOutDisabled;
+	/**
+	 * Images for step out button.
+	 */
+	public PImage debug, debugHover, debugPressed, debugDisabled;
 	//endregion images
 	
-	/** CPU control buttons. */
-	public TextureButton resetButton, playButton, pauseButton, cycleButton, stepOverButton, stepInButton, stepOutButton;
+	/**
+	 * CPU control buttons.
+	 */
+	public TextureButton resetButton, playButton, pauseButton, cycleButton, debugButton;
 	
-	/** Keyboard module. */
+	/**
+	 * Keyboard module.
+	 */
 	public Keyboardonator keyboard;
 	
-	/** Character buffer for the TTY. */
+	/**
+	 * Character buffer for the TTY.
+	 */
 	public char[][] ttyBuffer;
-	/** Input buffer not yet consumed by the CPU. */
+	/**
+	 * Input buffer not yet consumed by the CPU.
+	 */
 	public byte[] ttyInputBuffer;
-	/** TTY variables. */
+	/**
+	 * TTY variables.
+	 */
 	public int ttyWidth, ttyHeight, ttyCursorPos, ttyInputLen, ttyInputPos;
 	
-	/** Whether or not the settings thingy is open. */
+	/**
+	 * Whether or not the settings thingy is open.
+	 */
 	public boolean settings;
 	
 	//region resources
@@ -135,14 +194,28 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		}
 		return null;
 	}
-	//enregion resources
+	
+	public static byte[] loadJarBytes(String resource) {
+		try {
+			InputStream stream = GR8EMUr3_1.class.getClassLoader().getResourceAsStream("emu_resources/" + resource);
+			if (stream == null) {
+				throw new FileNotFoundException(resource);
+			}
+			byte[] heck = new byte[stream.available()];
+			int n = stream.read(heck);
+			return heck;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	//endregion resources
 	
 	@Override
 	@SuppressWarnings("all")
 	public void setup() {
 		inst = this;
 		
-		emulator = new EmuThread();
 		emulator.setHertz(1000000);
 		emulator.doTick = false;
 		emulator.reset();
@@ -150,6 +223,10 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		//region loading
 		font12 = loadJarFont("font12.vlw");
 		font48 = loadJarFont("font48.vlw");
+		
+		JSONObject isaRaw = new JSONObject(new String(loadJarBytes("isa.json")));
+		verboseInstructionSet = new InstructionSet(isaRaw, true);
+		standardInstructionSet = new InstructionSet(isaRaw);
 		
 		reset = loadJarImage("reset.png");
 		resetHover = loadJarImage("reset_hover.png");
@@ -185,6 +262,11 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		stepOutHover = loadJarImage("out_hover.png");
 		stepOutPressed = loadJarImage("out_pressed.png");
 		stepOutDisabled = loadJarImage("out_disabled.png");
+		
+		debug = loadJarImage("debug.png");
+		debugHover = loadJarImage("debug_hover.png");
+		debugPressed = loadJarImage("debug_pressed.png");
+		debugDisabled = loadJarImage("debug_disabled.png");
 		//endregion loading
 		
 		//region tty
@@ -230,20 +312,10 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		), () -> emulator.forceTick++);
 		screen.add(cycleButton);
 		
-		stepOverButton = new TextureButton(this, 2 * thingyWidth + 165, 5, 40, 40, false, new TextureButtonStyle(
-				stepOver, stepOverHover, stepOverPressed, stepOverDisabled
-		), () -> emulator.stepOver());
-		screen.add(stepOverButton);
-		
-		stepInButton = new TextureButton(this, 2 * thingyWidth + 205, 5, 40, 40, false, new TextureButtonStyle(
-				stepIn, stepInHover, stepInPressed, stepInDisabled
-		), () -> emulator.stepIn());
-		screen.add(stepInButton);
-		
-		stepOutButton = new TextureButton(this, 2 * thingyWidth + 245, 5, 40, 40, false, new TextureButtonStyle(
-				stepOut, stepOutHover, stepOutPressed, stepOutDisabled
-		), () -> emulator.stepOut());
-		screen.add(stepOutButton);
+		debugButton = new TextureButton(this, 2 * thingyWidth + 165, 5, 40, 40, false, new TextureButtonStyle(
+				debug, debugHover, debugPressed, debugDisabled
+		), () -> debugger.show());
+		screen.add(debugButton);
 		
 		keyboard = new Keyboardonator(this);
 		screen.add(keyboard);
@@ -285,15 +357,18 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		alu.valueSupplier = () -> (int) emulator.instance.alo;
 		screen.add(alu);
 		
+		regF = new RegisterFlags(this, 1 * thingyWidth, 4 * thingyHeight, "flag register");
+		screen.add(regF);
+		
 		regX = new Register8Bit(this, 1 * thingyWidth, 5 * thingyHeight, "X register");
 		regX.valueSupplier = () -> (int) emulator.instance.regX;
 		regX.valueUpdater = (v) -> emulator.instance.regX = (byte) (int) v;
 		screen.add(regX);
 		
-		regD = new Register8Bit(this, 1 * thingyWidth, 6 * thingyHeight, "D register");
-		regD.valueSupplier = () -> (int) emulator.instance.regD;
-		regD.valueUpdater = (v) -> emulator.instance.regD = (byte) (int) v;
-		screen.add(regD);
+		regY = new Register8Bit(this, 1 * thingyWidth, 6 * thingyHeight, "Y register");
+		regY.valueSupplier = () -> (int) emulator.instance.regY;
+		regY.valueUpdater = (v) -> emulator.instance.regY = (byte) (int) v;
+		screen.add(regY);
 		
 		regIR = new Register8Bit(this, 1 * thingyWidth, 7 * thingyHeight, "instruction register");
 		regIR.valueSupplier = () -> (int) emulator.instance.regIR;
@@ -330,37 +405,56 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		//endregion modules
 		
 		//region settings
-		
-		selDriveFile = new Button(this, 2 * thingyWidth + 150, 50, 100, 20, "select volume", false,
-				()->selectInput("Seleft drive file...", "selectDrive")
+		selDriveFile = new Button(this, 2 * thingyWidth + 150, 50, 100, 20, "select disk", false,
+				() -> selectInput("Seleft drive file...", "selectDrive")
 		);
 		screen.add(selDriveFile);
 		
 		dispDriveFile = new Text(this, 2 * thingyWidth + 260, 67, "none selected");
 		screen.add(dispDriveFile);
 		
+		ejectDrive = new Button(this, 2 * thingyWidth + 150, 80, 100, 20, "eject disk", false, this::ejectDrive);
+		screen.add(ejectDrive);
 		//endregion settings
 		
-		emulator.start();
-		//surface.setResizable(true);
+		if (GR8CPURev3_1.nativeLoadSuccess) {
+			emulator.start();
+		}
+		debugger = new Debugger();
+		runSketch(new String[]{"Debugger"}, debugger);
+		surface.setResizable(true);
 	}
 	
 	@Override
 	public void draw() {
 		background(255);
 		
+		if (!GR8CPURev3_1.nativeLoadSuccess) {
+			surface.setSize(570, 130);
+			fill(0);
+			textFont(font48, 48);
+			text("library load failed", 10, 48);
+			textFont(font12, 12);
+			text("The emulator library could not be loaded,\nand the emulator cannot function as a result.", 10, 68);
+			Throwable errorCause = GR8CPURev3_1.errorCause;
+			if (errorCause != null) {
+				text("Caused by: " + errorCause.getMessage(), 10, 110);
+				if (errorCause.getCause() != errorCause && errorCause.getCause() != null) {
+					text("Caused by: " + errorCause.getCause().getMessage(), 10, 124);
+				}
+			} else {
+				text("Unknown cause.", 10, 110);
+			}
+			return;
+		}
+		
 		if (settings) {
 			settingScreen.render();
-		}
-		else
-		{
+		} else {
 			// Button enable conditions.
 			pauseButton.enabled = emulator.doTick;
 			playButton.enabled = !emulator.doTick;
 			cycleButton.enabled = !emulator.doTick;
-			stepOverButton.enabled = !emulator.doTick;
-			stepInButton.enabled = !emulator.doTick;
-			stepOutButton.enabled = !emulator.doTick;
 			
 			// Draw the measured frequency.
 			textFont(font12, 12);
@@ -450,10 +544,17 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	}
 	
 	//region IO
+	public File selectedASM;
+	public InstructionSet verboseInstructionSet;
+	public InstructionSet standardInstructionSet;
+	public Pass2Out assemblyData;
+	
 	public void loadTheThingy(File selected) {
 		if (selected != null) {
 			String paff = selected.getAbsolutePath();
 			if (paff.endsWith(".hex")) {
+				assemblyData = null;
+				selectedASM = null;
 				emulator.doTick = false;
 				byte[] rom = null;
 				try {
@@ -464,7 +565,33 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 				if (rom != null) {
 					emulator.instance.rom = rom;
 				}
+			} else if (paff.endsWith(".asm") || paff.endsWith(".S")) {
+				selectedASM = selected;
+				try {
+					loadASMFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+					selectedASM = null;
+				}
 			}
+		}
+	}
+	
+	public void loadASMFile() throws IOException {
+		assemblyData = null;
+		Pass2Out verbose = AssemblerCore.simpleFullAssemble(selectedASM.getAbsolutePath(), verboseInstructionSet);
+		if (verbose.errors.size() == 0) {
+			assemblyData = verbose;
+		} else {
+			Pass2Out nonverbose = AssemblerCore.simpleFullAssemble(selectedASM.getAbsolutePath(), standardInstructionSet);
+			if (nonverbose.errors.size() == 0) {
+				assemblyData = nonverbose;
+			}
+		}
+		if (assemblyData == null) {
+			emulator.instance.rom = new byte[0];
+		} else {
+			emulator.instance.rom = assemblyData.getBytes();
 		}
 	}
 	
@@ -507,9 +634,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	public void mousePressed() {
 		if (settings) {
 			settingScreen.mousePressed();
-		}
-		else
-		{
+		} else {
 			screen.mousePressed();
 		}
 	}
@@ -518,9 +643,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	public void mouseReleased() {
 		if (settings) {
 			settingScreen.mouseReleased();
-		}
-		else
-		{
+		} else {
 			screen.mouseReleased();
 		}
 	}
@@ -531,9 +654,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	public void keyPressed() {
 		if (settings) {
 			settingScreen.keyPressed();
-		}
-		else
-		{
+		} else {
 			screen.keyPressed();
 			if (ctrlPressed && key == 15) {
 				selectInput("Open ROM or assembly file...", "loadTheThingy");
@@ -549,9 +670,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	public void keyReleased() {
 		if (settings) {
 			settingScreen.keyReleased();
-		}
-		else
-		{
+		} else {
 			screen.keyReleased();
 		}
 		if (keyCode == CONTROL) {
@@ -560,11 +679,17 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	}
 	//endregion UI
 	
+	public void ejectDrive() {
+		emulator.instance.setVolume(null, true);
+		dispDriveFile.text = "none selected";
+	}
+	
 	public void selectDrive(File selected) {
 		if (selected != null) {
 			driveFile = selected.getAbsolutePath();
 			emulator.instance.setVolume(selected, true);
 			mousePressed = false;
+			dispDriveFile.text = selected.getName();
 		}
 	}
 	
@@ -685,14 +810,10 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 					res = instance.tick(times, tickMode);
 					if (res == 7) {
 						res = 0;
-					}
-					else
-					{
+					} else {
 						tickMode = 0;
 					}
-				}
-				else
-				{
+				} else {
 					res = instance.tick(times, 0);
 				}
 				nano1 = (System.nanoTime() + 5000) / 10000 * 10000;

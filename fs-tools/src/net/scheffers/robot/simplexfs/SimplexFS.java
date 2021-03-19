@@ -405,13 +405,12 @@ public class SimplexFS {
 		int numBlocks = (data.length + 255) / 256;
 		List<Integer> chain = new ArrayList<>(numBlocks);
 		int tableIndex = 4; // It's impossible to have a free block before this.
-		outer: for (int i = 0; i < numBlocks; i++) {
-			for (; tableIndex < sectors.length; tableIndex ++) {
-				if (fat[tableIndex * 2] == 0 && fat[tableIndex * 2 + 1] == 0) {
-					chain.add(tableIndex);
-					continue outer;
-				}
+		for (; tableIndex < sectors.length && chain.size() < numBlocks; tableIndex ++) {
+			if (fat[tableIndex * 2] == 0 && fat[tableIndex * 2 + 1] == 0) {
+				chain.add(tableIndex);
 			}
+		}
+		if (chain.size() < numBlocks) {
 			throw new Exception("Out of space!");
 		}
 		for (int i = 0; i < chain.size() - 1; i++) {

@@ -1,4 +1,4 @@
-package net.scheffers.robot.hyperasm.isa;
+package net.scheffers.robot.xasm.isa;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -16,26 +16,13 @@ public class InstructionSet {
     public Map<String, InstructionDef[]> firstTokenMap;
     public String[] forbiddenNames;
     public int wordBits;
-    public boolean isVerbose;
     
     public InstructionSet() {
         
     }
     
     public InstructionSet(File file) throws Exception {
-        this(new JSONObject(new String(Files.readAllBytes(file.toPath()))), false);
-    }
-    
-    public InstructionSet(File file, boolean verbose) throws Exception {
-        this(new JSONObject(new String(Files.readAllBytes(file.toPath()))), verbose);
-    }
-    
-    public InstructionSet(JSONObject obj) {
-        this(obj, false);
-    }
-    
-    public InstructionSet(JSONObject obj, boolean verbose) {
-        isVerbose = verbose;
+        JSONObject obj = new JSONObject(new String(Files.readAllBytes(file.toPath())));
         // Metadata.
         JSONObject meta = obj.getJSONObject("metadata");
         wordBits = meta.getInt("word_size");
@@ -46,18 +33,27 @@ public class InstructionSet {
             // Get the JSONObject corresponding to the instruction.
             JSONObject insn = instructions.getJSONObject(i);
             // Let the constructor handle the rest.
-            this.instructions[i] = new InstructionDef(insn, wordBits, verbose);
+            this.instructions[i] = new InstructionDef(insn, wordBits);
         }
         // Instruction of mappings and forbidden names.
         recalcMap();
+    }
+    
+    public boolean isValidForExpression(String in) {
+        for (String no : forbiddenNames) {
+            if (no.equalsIgnoreCase(in)) {
+                return false;
+            }
+        }
+        return true;
     }
     
     public static boolean matchValidLabel(String s) {
         return s.matches("[a-zA-Z_][a-zA-Z0-9_]*");
     }
     
-    public static boolean matchValidSublabelUse(String s) {
-        return s.matches("[<>]?\\.[a-zA-Z_][a-zA-Z0-9_]*");
+    public static boolean matchValidLabelUse(String s) {
+        return s.matches("[<>]?.?[a-zA-Z_][a-zA-Z0-9_]*");
     }
     
     public void recalcMap() {

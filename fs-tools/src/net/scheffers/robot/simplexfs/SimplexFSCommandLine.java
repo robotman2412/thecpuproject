@@ -53,7 +53,7 @@ public class SimplexFSCommandLine {
                     "  -unsx     Read a simplex filesystem into a directory (works for both disk image and logisim's proprietary bullshit file).\n" +
                     "  -size [s] Size of the filesystem to be made.\n" +
                     "            123 - 123 blocks of 256 bytes each. Max: 65535\n" +
-                    "            64KB - 64 kilobytes (65 536 bytes) of capacity in total. Max: 16383KB\n" +
+                    "            64KB - 64 kilobytes (65 536 bytes) of capacity in total. Max: 16383KB (Just under 16MB)\n" +
                     "  -vn [n]   Specify volume name for filesystem to be made.\n" +
                     "  -in [f]   Input file.\n" +
                     "  -out [f]  Output file.\n" +

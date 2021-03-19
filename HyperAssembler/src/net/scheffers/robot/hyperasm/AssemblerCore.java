@@ -1,6 +1,7 @@
 package net.scheffers.robot.hyperasm;
 
 import com.sun.istack.internal.Nullable;
+import javafx.util.Pair;
 import net.scheffers.robot.hyperasm.exception.CompilerError;
 import net.scheffers.robot.hyperasm.exception.CompilerSyntaxError;
 import net.scheffers.robot.hyperasm.exception.CompilerWarning;
@@ -72,7 +73,7 @@ public class AssemblerCore {
 		// This is sort of legacy code, but i need it.
 		raw = raw.replaceAll(" ", "\t");
 		StringBuilder s = new StringBuilder();
-		String[] splitTokens = "# @ + - * = / , ( )".split(" ");
+		String[] splitTokens = "# @ + - * = / , ( ) [ ]".split(" ");
 		boolean inString = false;
 		boolean isDoubleQuotes = false;
 		boolean isEscaped = false;
@@ -152,12 +153,16 @@ public class AssemblerCore {
 	}
 	
 	public static Pass2Out simpleFullAssemble(String fileName, InstructionSet instructionSet) throws IOException {
+		return simpleFullAssemble(fileName, instructionSet, IBM437);
+	}
+	
+	public static Pass2Out simpleFullAssemble(String fileName, InstructionSet instructionSet, Charset charset) throws IOException {
 		DirectoryImportSupplier supplier = new DirectoryImportSupplier(System.getProperty("user.dir"));
 		File res = supplier.resolveFile(fileName);
 		if (res == null) {
 			throw new FileNotFoundException(fileName);
 		}
-		supplier.setDir(res.getParent());
+		supplier.setDir(res.getAbsoluteFile().getParentFile().getAbsolutePath());
 		String[] rawLines = supplier.getStringFile(fileName).split("\\r\\n|\\r|\\n");
 		String[][] tokensedLines = new String[rawLines.length][];
 		for (int i = 0; i < rawLines.length; i++) {
@@ -245,6 +250,15 @@ public class AssemblerCore {
 		} while(importsLeft);
 		
 		//TODO: import binary files and parse other metadata
+		for (int i = 0; i < tokensOut.size(); i++) {
+			if (tokensOut.get(i).length >= 2 && tokensOut.get(i)[0].equals("@") && tokensOut.get(i)[1].equalsIgnoreCase("no_padding")) {
+				removePrefixPadding = true;
+				tokensOut.remove(i);
+				lineNumbersOut.remove(i);
+				sourceNamesOut.remove(i);
+				i --;
+			}
+		}
 		
 		//put into output
 		Pass0Out out = new Pass0Out();
@@ -295,6 +309,9 @@ public class AssemblerCore {
 							out.warnings.add(new CompilerWarning(out.tokensSourceFiles[i], out.tokenLineNums[i],
 									String.format("Reverse jump in addresses, from 0x%02x to 0x%02x", currentAddress, value[0])
 							));
+						}
+						if (currentAddress == 0) {
+							out.paddingLength = value[0];
 						}
 						currentAddress = value[0];
 					} catch (Exception e) {
@@ -366,6 +383,7 @@ public class AssemblerCore {
 						{
 							lengthyBoie ++;
 						}
+						lastIndex = x + 1;
 					}
 					else if (x == line.length - 1) {
 						String[] bullshite = new String[x - lastIndex + 1];
@@ -402,6 +420,35 @@ public class AssemblerCore {
 				} catch (Exception e) {
 					out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i], e.getMessage(), e));
 					continue;
+				}
+			}
+			else if (line.length > 1 && line[1].equalsIgnoreCase("pie")) {
+				int split = -1;
+				for (int x = 2; x < line.length; x++) {
+					if (line[x].equals(",")) {
+						split = x;
+					}
+				}
+				if (split == -1) {
+					out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i], "Expected start, end of position-independant-execution."));
+				}
+				else
+				{
+					String[] arg0 = new String[split - 2];
+					String[] arg1 = new String[line.length - split - 1];
+					System.arraycopy(line, 2, arg0, 0, arg0.length);
+					System.arraycopy(line, split + 1, arg1, 0, arg1.length);
+					try {
+						long[] res0 = Expression.resolve("", arg0, out, i);
+						long[] res1 = Expression.resolve("", arg1, out, i);
+						if (res0.length != 1 || res1.length != 1) {
+							throw new Exception("Unexpected string.");
+						}
+						out.pieAddresses.add(new Pair<>((int)res0[0], (int)res1[0]));
+					} catch (Exception e) {
+						out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i], e.getMessage(), e));
+						continue;
+					}
 				}
 			}
 			// Check for instructions.
@@ -506,6 +553,7 @@ public class AssemblerCore {
 							}
 							currentAddress ++;
 						}
+						lastIndex = x + 1;
 					}
 					else if (x == line.length - 1) {
 						String[] bullshite = new String[x - lastIndex + 1];
@@ -557,7 +605,7 @@ public class AssemblerCore {
 				}
 			}
 			// Get output.
-			long[] insnOut = insn.getBytes(insnArgs, isa.wordBits);
+			long[] insnOut = insn.getBytes(insnArgs, isa.wordBits, out.pieAddresses, address);
 			if (insnOut == null || insn.numWords != insnOut.length || insn.numWords != out.lineLengths[i]) {
 				out.errors.add(new CompilerError(out.tokensSourceFiles[i], out.tokenLineNums[i], "Number of words do not match instruction, this is a bug."));
 				continue;

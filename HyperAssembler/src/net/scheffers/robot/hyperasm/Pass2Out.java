@@ -1,21 +1,31 @@
 package net.scheffers.robot.hyperasm;
 
 import jutils.Table;
+import net.scheffers.robot.hyperasm.isa.InstructionDef;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.io.PrintStream;
+import java.util.*;
 
 public class Pass2Out extends Pass1Out {
 	
 	public long[] wordsOut;
 	
 	public Pass2Out() {
-		
+		tokensOut = new String[0][];
+		errors = new LinkedList<>();
+		warnings = new LinkedList<>();
+		removePrefixPadding = false;
+		tokensSourceFiles = new String[0];
+		tokenLineNums = new int[0];
+		lineInsnArgs = new String[0][];
+		lineInsns = new InstructionDef[0];
+		lineLengths = new long[0];
+		lineStartAddresses = new long[0];
+		pieAddresses = new LinkedList<>();
+		labels = new HashMap<>();
 	}
 	
 	public Pass2Out(Pass1Out in) {
@@ -33,15 +43,51 @@ public class Pass2Out extends Pass1Out {
 		lineInsns = in.lineInsns;
 		labels = in.labels;
 		isa = in.isa;
+		pieAddresses = in.pieAddresses;
+		paddingLength = in.paddingLength;
+	}
+	
+	/**
+	 * Returns a byte array of the assembled thingies.
+	 * @return the bytes, little endian
+	 */
+	public byte[] getBytes() {
+		if (isa.wordBits <= 8) {
+			byte[] out = new byte[wordsOut.length - (int) paddingLength];
+			for (int i = 0; i < wordsOut.length - paddingLength; i++) {
+				out[i] = (byte) (wordsOut[i + (int) paddingLength] & 0xff);
+			}
+			return out;
+		}
+		else
+		{
+			throw new UnsupportedOperationException("Stuff's not coded yet.");
+		}
 	}
 	
 	public void saveLHF(File file) throws IOException {
 		FileOutputStream out = new FileOutputStream(file);
-		out.write("v1.0 raw\n".getBytes());
-		out.write(String.format("%02X", wordsOut[0]).getBytes());
-		for (int i = 1; i < wordsOut.length; i++) {
-			out.write(String.format(" %02X", wordsOut[i]).getBytes());
+		PrintStream pout = new PrintStream(out);
+		pout.println("v2.0 raw");
+		pout.printf("%02X", wordsOut[(int) paddingLength]);
+		for (int i = (int) paddingLength + 1; i < wordsOut.length; i++) {
+			pout.printf(" %02X", wordsOut[i]);
 		}
+		pout.close();
+	}
+	
+	public void saveRaw(File file) throws IOException {
+		FileOutputStream out = new FileOutputStream(file);
+		if (isa.wordBits <= 8) {
+			for (int i = (int) paddingLength; i < wordsOut.length; i++) {
+				out.write((int) wordsOut[i] & 0xff);
+			}
+		}
+		else
+		{
+			throw new UnsupportedOperationException("Instruction set has word size in excess of 8 bits, cannot save this file!");
+		}
+		out.flush();
 		out.close();
 	}
 	

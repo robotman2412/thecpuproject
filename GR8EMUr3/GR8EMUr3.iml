@@ -26,5 +26,15 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="GR8EMUr3_1" level="project" />
+    <orderEntry type="module" module-name="HyperAssembler" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../HyperAssembler/json-20201115.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

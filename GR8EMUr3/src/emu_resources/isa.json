@@ -1,0 +1,2699 @@
+{
+    "metadata": {
+        "word_size": 8,
+        "processor_names": [
+            "GR8CPU Rev3",
+            "GR8CPUr3"
+        ],
+        "default_little_endian": true,
+        "has_loaders": true,
+        "sorting": "hex"
+    },
+    "load": [
+        {
+            "name": "insnld01_normal",
+            "hex": "01",
+            "desc": [
+                "Standard loading procedure."
+            ],
+            "controls": [
+                "ILD  IRI  INC  STR"
+            ]
+        },
+        {
+            "name": "insnld02_irq",
+            "hex": "02",
+            "desc": [
+                "Interrupt request loading procedure.",
+                "Pushes the PC and jumps to the interrupt request handler."
+            ],
+            "controls": [
+                "FIRQ  FNMI  OPTN0",
+                "IST  STA  COBLO  INC  OPTN0",
+                "IST  STA  COBHI  INC  OPTN0",
+                "INTRA  JMP",
+                "ILD  IRI  INC  STR"
+            ]
+        },
+        {
+            "name": "insnld03_nmi",
+            "hex": "03",
+            "desc": [
+                "Non-maskable interrupt loading procedure.",
+                "Pushes the PC and jumps to the non-maskable interrupt handler."
+            ],
+            "controls": [
+                "FIRQ  FNMI  OPTN0",
+                "IST  STA  COBLO  INC  OPTN0",
+                "IST  STA  COBHI  INC  OPTN0",
+                "ERRA  JMP",
+                "ILD  IRI  INC  STR"
+            ]
+        }
+    ],
+    "instructions": [
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "BKI",
+            "verbose": "break nmi",
+            "hex": "00",
+            "desc": [
+                "Manually triggers NMI."
+            ],
+            "controls": [
+                "FIRQ  FNMI  OPTN0",
+                "IST  STA  COBLO  INC  OPTN0",
+                "IST  STA  COBHI  INC  OPTN0",
+                "ERRA  JMP  STR"
+            ],
+            "manual_pos": 0
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "BRK",
+            "verbose": "break",
+            "hex": "01",
+            "desc": [
+                "Manually triggers IRQ."
+            ],
+            "controls": [
+                "FIRQ  FNMI  OPTN0",
+                "IST  STA  COBLO  INC  OPTN0",
+                "IST  STA  COBHI  INC  OPTN0",
+                "INTRA  JMP  STR"
+            ],
+            "manual_pos": 1
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "CALL %",
+            "verbose": "call %",
+            "hex": "02",
+            "desc": [
+                "Calls the subroutine at %address%.",
+                "Pushes the value of the program counter onto the stack, and continues execution at %address%."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "IST  STA  COBLO  INC  OPTN0",
+                "IST  STA  COBHI  INC  OPTN0",
+                "JMP  OPTN3  ARA  STR"
+            ],
+            "manual_pos": 2
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "RET",
+            "verbose": "return",
+            "hex": "03",
+            "desc": [
+                "Returns from the subroutine.",
+                "Pops the top two values off the stack and continues execution there."
+            ],
+            "controls": [
+                "INC  OPTN0  ADRHI",
+                "ILD  STA  ISAHI  INC  OPTN0  ADRHI",
+                "ILD  STA  ISALO",
+                "JMP  ARA  STR"
+            ],
+            "manual_pos": 2
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "PSH A",
+            "verbose": "push A",
+            "hex": "04",
+            "desc": [
+                "Pushes the value of the %A% register onto the stack."
+            ],
+            "controls": [
+                "ROA  IST  STA  INC  OPTN0  STR"
+            ],
+            "manual_pos": 3
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "PSH X",
+            "verbose": "push X",
+            "hex": "05",
+            "desc": [
+                "Pushes the value of the %X% register onto the stack."
+            ],
+            "controls": [
+                "ROX  IST  STA  INC  OPTN0  STR"
+            ],
+            "manual_pos": 3
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "PSH Y",
+            "verbose": "push Y",
+            "hex": "06",
+            "desc": [
+                "Pushes the value of the %Y% register onto the stack."
+            ],
+            "controls": [
+                "ROY  IST  STA  INC  OPTN0  STR"
+            ],
+            "manual_pos": 4
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "PSH %",
+            "verbose": "push #%",
+            "hex": "07",
+            "desc": [
+                "Pushes %value% onto the stack."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "ROB  IST  STA  INC  OPTN0  STR"
+            ],
+            "manual_pos": 4
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "PSH [%]",
+            "verbose": "push %",
+            "hex": "08",
+            "desc": [
+                "Pushes the value at %address% in memory onto the stack."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIB",
+                "ROB  IST  STA  INC  OPTN0  STR"
+            ],
+            "manual_pos": 5
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "PUL A",
+            "verbose": "pull A",
+            "hex": "09",
+            "desc": [
+                "Pops the top value off the stack and stores it in the %A% register."
+            ],
+            "controls": [
+                "INC  OPTN0  ADRHI",
+                "ILD  STA  RIA  STR"
+            ],
+            "manual_pos": 6
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "PUL X",
+            "verbose": "pull X",
+            "hex": "0A",
+            "desc": [
+                "Pops the top value off the stack and stores it in the %X% register."
+            ],
+            "controls": [
+                "INC  OPTN0  ADRHI",
+                "ILD  STA  RIX  STR"
+            ],
+            "manual_pos": 7
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "PUL Y",
+            "verbose": "pull Y",
+            "hex": "0B",
+            "desc": [
+                "Pops the top value off the stack and stores it in the %Y% register."
+            ],
+            "controls": [
+                "INC  OPTN0  ADRHI",
+                "ILD  STA  RIY  STR"
+            ],
+            "manual_pos": 8
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "POP",
+            "verbose": "pop",
+            "hex": "0C",
+            "desc": [
+                "Pops the top value off the stack and discards it."
+            ],
+            "controls": [
+                "INC  OPTN0  ADRHI  STR"
+            ],
+            "manual_pos": 9
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "PUL [%]",
+            "verbose": "pull %",
+            "hex": "0D",
+            "desc": [
+                "Pops the top value off the stack and stores it at %address% in memory."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "INC  OPTN0  ADRHI",
+                "ILD  STA  RIB",
+                "IST  OPTN3  ARA  ROB  STR"
+            ],
+            "manual_pos": 10
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "JMP %",
+            "verbose": "jump %",
+            "hex": "0E",
+            "desc": [
+                "Continues execution at %address%."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "JMP  OPTN3  ARA  STR"
+            ],
+            "manual_pos": 11
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "BEQ %",
+            "verbose": "jump %, if A = B",
+            "hex": "0F",
+            "desc": [
+                "Continues execution at %address%, but only if A was equal to B;",
+                "At last compare or subtract, when %ZERO% flag is set.",
+                "Refers to A and B as operands and not as registers."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "JBC  OPTN3  ARA  STR"
+            ],
+            "manual_pos": 12
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "BNE %",
+            "verbose": "jump %, unless A = B",
+            "hex": "10",
+            "desc": [
+                "Continues execution at %address%, but only if A was not equal to B;",
+                "At last compare or subtract, when %ZERO% flag is reset.",
+                "Refers to A and B as operands and not as registers."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "JBC  OPTN2  OPTN3  ARA  STR"
+            ],
+            "manual_pos": 12
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "BOV %",
+            "verbose": "jump %, if A > B",
+            "hex": "11",
+            "desc": [
+                "Continues execution at %address%, but only if A was larger than B;",
+                "At last compare or subtract, when %ZERO% flag is reset and %CARRY% flag is set.",
+                "Refers to A and B as operands and not as registers."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "JBC  OPTN0  OPTN3  ARA  STR"
+            ],
+            "manual_pos": 13
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "BNO %",
+            "verbose": "jump %, if A <= B",
+            "hex": "12",
+            "desc": [
+                "Continues execution at %address%, but only if A was smaller than or equal to B;",
+                "At last compare or subtract, when %ZERO% flag is set or %CARRY% flag is reset.",
+                "Refers to A and B as operands and not as registers."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "JBC  OPTN0  OPTN2  OPTN3  ARA  STR"
+            ],
+            "manual_pos": 14
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "BUN %",
+            "verbose": "jump %, if A < B",
+            "hex": "13",
+            "desc": [
+                "Continues execution at %address%, but only if A was smaller than B;",
+                "At last compare or subtract, when %ZERO% flag is reset and %CARRY% flag is reset.",
+                "Refers to A and B as operands and not as registers."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "JBC  OPTN1  OPTN3  ARA  STR"
+            ],
+            "manual_pos": 2
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "BNU %",
+            "verbose": "jump %, if A >= B",
+            "hex": "14",
+            "desc": [
+                "Continues execution at %address%, but only if A was greater than or equal to B;",
+                "At last compare or subtract, when %ZERO% flag is set or %CARRY% flag is set.",
+                "Refers to A and B as operands and not as registers."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "JBC  OPTN1  OPTN2  OPTN3  ARA  STR"
+            ],
+            "manual_pos": 2
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "BCS %",
+            "verbose": "jump %, if CARRY",
+            "hex": "15",
+            "desc": [
+                "Continues execution at %address%, but only if result was greater than 255;",
+                "At last operation, when %CARRY% flag is set.",
+                "Refers to A and B as operands and not as registers."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "JBC  OPTN0  OPTN1  OPTN3  ARA  STR"
+            ],
+            "manual_pos": 3
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "BCC %",
+            "verbose": "jump %, unless CARRY",
+            "hex": "16",
+            "desc": [
+                "Continues execution at %address%, but only if result was less than or equal to 255;",
+                "At last operation, when %CARRY% flag is reset.",
+                "Refers to A and B as operands and not as registers."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "JBC  OPTN0  OPTN1  OPTN2  OPTN3  ARA  STR"
+            ],
+            "manual_pos": 3
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "MOV A, X",
+            "verbose": "copy X to A",
+            "hex": "17",
+            "desc": [
+                "Copies the content of %X% to %A%."
+            ],
+            "controls": [
+                "ROX  RIA  STR"
+            ],
+            "manual_pos": 4
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "MOV A, Y",
+            "verbose": "copy Y to A",
+            "hex": "18",
+            "desc": [
+                "Copies the content of %Y% to %A%."
+            ],
+            "controls": [
+                "ROY  RIA  STR"
+            ],
+            "manual_pos": 4
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "MOV X, A",
+            "verbose": "copy A to X",
+            "hex": "19",
+            "desc": [
+                "Copies the content of %A% to %X%."
+            ],
+            "controls": [
+                "ROA  RIX  STR"
+            ],
+            "manual_pos": 5
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "MOV X, Y",
+            "verbose": "copy Y to X",
+            "hex": "1A",
+            "desc": [
+                "Copies the content of %Y% to %X%."
+            ],
+            "controls": [
+                "ROY  RIX  STR"
+            ],
+            "manual_pos": 6
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "MOV Y, A",
+            "verbose": "copy A to Y",
+            "hex": "1B",
+            "desc": [
+                "Copies the content of %A% to %Y%."
+            ],
+            "controls": [
+                "ROA  RIY  STR"
+            ],
+            "manual_pos": 7
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "MOV Y, X",
+            "verbose": "copy X to Y",
+            "hex": "1C",
+            "desc": [
+                "Copies the content of %X% to %Y%."
+            ],
+            "controls": [
+                "ROX  RIY  STR"
+            ],
+            "manual_pos": 8
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV A, %",
+            "verbose": "load #%",
+            "hex": "1D",
+            "desc": [
+                "Loads %value% into the %A% register."
+            ],
+            "controls": [
+                "ILD  RIA  INC  STR"
+            ],
+            "manual_pos": 9
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV X, %",
+            "verbose": "load X, #%",
+            "hex": "1E",
+            "desc": [
+                "Loads %value% into the %X% register."
+            ],
+            "controls": [
+                "ILD  RIX  INC  STR"
+            ],
+            "manual_pos": 10
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV Y, %",
+            "verbose": "load Y, #%",
+            "hex": "1F",
+            "desc": [
+                "Loads %value% into the %A% register."
+            ],
+            "controls": [
+                "ILD  RIY  INC  STR"
+            ],
+            "manual_pos": 11
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV A, [%]",
+            "verbose": "load %",
+            "hex": "20",
+            "desc": [
+                "Loads the value at %address% into the %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  RIA  ARA  STR"
+            ],
+            "manual_pos": 12
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV X, [%]",
+            "verbose": "load X, %",
+            "hex": "21",
+            "desc": [
+                "Loads the value at %address% into the %X% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  RIX  ARA  STR"
+            ],
+            "manual_pos": 12
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV Y, [%]",
+            "verbose": "load Y, %",
+            "hex": "22",
+            "desc": [
+                "Loads the value at %address% into the %Y% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  RIY  ARA  STR"
+            ],
+            "manual_pos": 13
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV A, X[%]",
+            "verbose": "load %, +X",
+            "hex": "23",
+            "desc": [
+                "Load the value at %address% + %X% in memory."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  FCX  RIA  ARA  STR"
+            ],
+            "manual_pos": 14
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV A, Y[%]",
+            "verbose": "load %, +Y",
+            "hex": "24",
+            "desc": [
+                "Load the value at %address% + %Y% in memory."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  FCY  RIA  ARA  STR"
+            ],
+            "manual_pos": 15
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV A, (%)",
+            "verbose": "load pointer %",
+            "hex": "25",
+            "desc": [
+                "Loads the value at %address% in memory as a pointer, then loads the value at the address said pointer represents."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  ARA  OPTN3  RIB",
+                "ILD  ARA  OPTN3  ADC  ISAHI",
+                "ROB  ISALO",
+                "ILD  ARA  RIA  STR"
+            ],
+            "manual_pos": 16
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV A, X(%)Y",
+            "verbose": "load pointer %, +XY",
+            "hex": "26",
+            "desc": [
+                "Loads the value at %address% + %Y% in memory as a pointer, then loads the value at the address pointer + %X% represents."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  ARA  OPTN3  FCY  RIB",
+                "ILD  ARA  OPTN3  FCY  ADC  ISAHI",
+                "ROB  ISALO",
+                "ILD  ARA  FCX  RIA  STR"
+            ],
+            "manual_pos": 17
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV A, X(%)",
+            "verbose": "load pointer %, +X",
+            "hex": "27",
+            "desc": [
+                "Loads the value at %address% in memory as a pointer, then loads the value at the address pointer + %X% represents."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  ARA  OPTN3  RIB",
+                "ILD  ARA  OPTN3  ADC  ISAHI",
+                "ROB  ISALO",
+                "ILD  ARA  FCX  RIA  STR"
+            ],
+            "manual_pos": 18
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV A, (%)Y",
+            "verbose": "load pointer %, +Y",
+            "hex": "28",
+            "desc": [
+                "Loads the value at %address% + %Y% in memory as a pointer, then loads the value at the address pointer represents."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  ARA  OPTN3  FCY  RIB",
+                "ILD  ARA  OPTN3  FCY  ADC  ISAHI",
+                "ROB  ISALO",
+                "ILD  ARA  RIA  STR"
+            ],
+            "manual_pos": 19
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV [%], A",
+            "verbose": "store %",
+            "hex": "29",
+            "desc": [
+                "Stores the value of the %A% register at %address% in memory."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "IST  OPTN3  ROA  ARA  STR"
+            ],
+            "manual_pos": 20
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV [%], X",
+            "verbose": "store X, %",
+            "hex": "2A",
+            "desc": [
+                "Stores the value of the %X% register at %address% in memory."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "IST  OPTN3  ROX  ARA  STR"
+            ],
+            "manual_pos": 21
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV [%], Y",
+            "verbose": "store Y, %",
+            "hex": "2B",
+            "desc": [
+                "Stores the value of the %Y% register at %address% in memory."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "IST  OPTN3  ROY  ARA  STR"
+            ],
+            "manual_pos": 22
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV X[%], A",
+            "verbose": "store %, +X",
+            "hex": "2C",
+            "desc": [
+                "Stores the value of the %A% register at %address% + %X% in memory."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "IST  OPTN3  ROA  ARA  FCX  STR"
+            ],
+            "manual_pos": 23
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV Y[%], A",
+            "verbose": "store %, +Y",
+            "hex": "2D",
+            "desc": [
+                "Stores the value of the %A% register at %address% + %Y% in memory."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "IST  OPTN3  ROA  ARA  FCY  STR"
+            ],
+            "manual_pos": 24
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV (%), A",
+            "verbose": "store pointer %",
+            "hex": "2E",
+            "desc": [
+                "Loads the value at %address% in memory as a pointer, then stores the value of the %A% register at the address said pointer represents."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  ARA  OPTN3  RIB",
+                "ILD  ARA  OPTN3  ADC  ISAHI",
+                "ROB  ISALO",
+                "IST  ARA  ROA  STR"
+            ],
+            "manual_pos": 25
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV X(%)Y, A",
+            "verbose": "store pointer %, +XY",
+            "hex": "2F",
+            "desc": [
+                "Loads the value at %address% + %Y% in memory as a pointer, then stores the value of the %A% register at the address pointer + %X% represents."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  ARA  OPTN3  FCY  RIB",
+                "ILD  ARA  OPTN3  FCY  ADC  ISAHI",
+                "ROB  ISALO",
+                "IST  ARA  FCX  ROA  STR"
+            ],
+            "manual_pos": 26
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV X(%), A",
+            "verbose": "store pointer %, +X",
+            "hex": "30",
+            "desc": [
+                "Loads the value at %address% in memory as a pointer, then stores the value of the %A% register at the address pointer + %X% represents."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  ARA  OPTN3  RIB",
+                "ILD  ARA  OPTN3  ADC  ISAHI",
+                "ROB  ISALO",
+                "IST  ARA  FCX  ROA  STR"
+            ],
+            "manual_pos": 27
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "MOV (%)Y, A",
+            "verbose": "store pointer %, +Y",
+            "hex": "31",
+            "desc": [
+                "Loads the value at %address% + %Y% in memory as a pointer, then stores the value of the %A% register at the address pointer represents."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  ARA  OPTN3  FCY  RIB",
+                "ILD  ARA  OPTN3  FCY  ADC  ISAHI",
+                "ROB  ISALO",
+                "IST  ARA  ROA  STR"
+            ],
+            "manual_pos": 28
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "ADD A, X",
+            "verbose": "add X",
+            "hex": "32",
+            "desc": [
+                "Adds the %X% register to the %A% register.",
+                "Stores to the %A% register."
+            ],
+            "controls": [
+                "ROX  RIB",
+                "ALO  RIA  FRI  STR"
+            ],
+            "manual_pos": 29
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "ADD A, Y",
+            "verbose": "add Y",
+            "hex": "33",
+            "desc": [
+                "Adds the %Y% register to the %A% register.",
+                "Stores to the %A% register."
+            ],
+            "controls": [
+                "ROY  RIB",
+                "ALO  RIA  FRI  STR"
+            ],
+            "manual_pos": 30
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "SUB A, X",
+            "verbose": "sub X",
+            "hex": "34",
+            "desc": [
+                "Subtracts the %X% register from the %A% register.",
+                "Stores to the %A% register."
+            ],
+            "controls": [
+                "ROX  RIB",
+                "ALO  AIB  OPTN2  RIA  FRI  STR"
+            ],
+            "manual_pos": 31
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "SUB A, Y",
+            "verbose": "sub Y",
+            "hex": "35",
+            "desc": [
+                "Subtracts the %Y% register from the %A% register.",
+                "Stores to the %A% register."
+            ],
+            "controls": [
+                "ROY  RIB",
+                "ALO  AIB  OPTN2  RIA  FRI  STR"
+            ],
+            "manual_pos": 32
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "CMP A, X",
+            "verbose": "comp X",
+            "hex": "36",
+            "desc": [
+                "Compares the %A% register to the %X% register."
+            ],
+            "controls": [
+                "ROX  RIB",
+                "AIB  OPTN2  FRI  STR"
+            ],
+            "manual_pos": 33
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "CMP A, Y",
+            "verbose": "comp Y",
+            "hex": "37",
+            "desc": [
+                "Compares the %A% register to the %Y% register."
+            ],
+            "controls": [
+                "ROY  RIB",
+                "AIB  OPTN2  FRI  STR"
+            ],
+            "manual_pos": 34
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "ADD A, %",
+            "verbose": "add #%",
+            "hex": "38",
+            "desc": [
+                "Adds %value% to the %A% register."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "ALO  RIA  FRI  STR"
+            ],
+            "manual_pos": 35
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "ADD A, [%]",
+            "verbose": "add %",
+            "hex": "39",
+            "desc": [
+                "Adds the value at %address% to the %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  ARA  OPTN3  RIB",
+                "ALO  RIA  FRI  STR"
+            ],
+            "manual_pos": 36
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "SUB A, %",
+            "verbose": "sub #%",
+            "hex": "3A",
+            "desc": [
+                "Subtracts %value% from the %A% register."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "ALO  AIB  OPTN2  RIA  FRI  STR"
+            ],
+            "manual_pos": 37
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "SUB A, [%]",
+            "verbose": "sub %",
+            "hex": "3B",
+            "desc": [
+                "Subtracts the value at %address% from the %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  ARA  OPTN3  RIB",
+                "ALO  AIB  OPTN2  RIA  FRI  STR"
+            ],
+            "manual_pos": 38
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "CMP A, %",
+            "verbose": "comp #%",
+            "hex": "3C",
+            "desc": [
+                "Compares %A% to %value%."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "AIB  OPTN2  FRI  STR"
+            ],
+            "manual_pos": 39
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "CMP A, [%]",
+            "verbose": "comp %",
+            "hex": "3D",
+            "desc": [
+                "Compares %A% to the value at %address%."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  ARA  OPTN3  RIB",
+                "AIB  OPTN2  FRI  STR"
+            ],
+            "manual_pos": 40
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "INC A",
+            "verbose": "inc",
+            "hex": "3E",
+            "desc": [
+                "Increments %A% by one."
+            ],
+            "controls": [
+                "RSTB  OPTN2  ALO  RIA  FRI  STR"
+            ],
+            "manual_pos": 41
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "INC [%]",
+            "verbose": "inc %",
+            "hex": "3F",
+            "desc": [
+                "Increments the value at %address% by one.",
+                "Side effect: Result of computation is stored in %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  RIA  ARA  RSTB",
+                "ALO  OPTN2  RIA  FRI",
+                "IST  OPTN3  ROA  ARA  STR"
+            ],
+            "manual_pos": 42
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "DEC A",
+            "verbose": "dec",
+            "hex": "40",
+            "desc": [
+                "Decrements %A% by one."
+            ],
+            "controls": [
+                "RSTB  AIB  ALO  RIA  FRI  STR"
+            ],
+            "manual_pos": 43
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "DEC [%]",
+            "verbose": "dec %",
+            "hex": "41",
+            "desc": [
+                "Decrements the value at %address% by one.",
+                "Side effect: Result of computation is stored in %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  RIA  ARA  RSTB",
+                "ALO  AIB  RIA  FRI",
+                "IST  OPTN3  ROA  ARA  STR"
+            ],
+            "manual_pos": 44
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "SHL [%]",
+            "verbose": "shift L, %",
+            "hex": "42",
+            "desc": [
+                "Bitwise shifts the value at %address% left by one.",
+                "Side effect: Result of computation is stored in %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  RIA  ARA  RSTB",
+                "ALO  OPTN0  RIA  FRI",
+                "IST  OPTN3  ROA  ARA  STR"
+            ],
+            "manual_pos": 45
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "SHR [%]",
+            "verbose": "shift R, %",
+            "hex": "43",
+            "desc": [
+                "Bitwise shifts the value at %address% right by one.",
+                "Side effect: Result of computation is stored in %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  RIA  ARA  RSTB",
+                "ALO  OPTN0  AIB  RIA  FRI",
+                "IST  OPTN3  ROA  ARA  STR"
+            ],
+            "manual_pos": 46
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "ADDC A, %",
+            "verbose": "add cont #%",
+            "hex": "44",
+            "desc": [
+                "Add %value% to the %A% register, with carry in set to the %carry% flag."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "OPTN1 ALO  RIA  FRI  STR"
+            ],
+            "manual_pos": 4
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "ADDC A, [%]",
+            "verbose": "add cont %",
+            "hex": "45",
+            "desc": [
+                "Add the value at %address% in memory to the %A% register, with carry in set to the %carry% flag."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIB",
+                "OPTN1  ALO  RIA  FRI  STR"
+            ],
+            "manual_pos": 4
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "SUBC A, %",
+            "verbose": "sub cont #%",
+            "hex": "46",
+            "desc": [
+                "Subtract %value% from the %A% register, with carry in set to the %carry% flag."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "OPTN1 AIB ALO  RIA  FRI  STR"
+            ],
+            "manual_pos": 5
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "SUBC A, [%]",
+            "verbose": "sub cont %",
+            "hex": "47",
+            "desc": [
+                "Subtracts the value at %address% in memory from the %A% register, with carry in set to the %carry% flag."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIB",
+                "OPTN1  AIB  ALO  RIA  FRI  STR"
+            ],
+            "manual_pos": 6
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "CMPC A, %",
+            "verbose": "comp cont #%",
+            "hex": "48",
+            "desc": [
+                "Multi-byte variant of comp."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "OPTN1 AIB FRI  STR"
+            ],
+            "manual_pos": 7
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "CMPC A, [%]",
+            "verbose": "comp cont %",
+            "hex": "49",
+            "desc": [
+                "Multi-byte variant of comp."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIB",
+                "OPTN1  AIB  FRI  STR"
+            ],
+            "manual_pos": 8
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "INCC A",
+            "verbose": "inc cont",
+            "hex": "4A",
+            "desc": [
+                "Increment the %A% register, if the %carry% flag is set."
+            ],
+            "controls": [
+                "RSTB  OPTN1 ALO  RIA  FRI  STR"
+            ],
+            "manual_pos": 9
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "INCC [%]",
+            "verbose": "inc cont %",
+            "hex": "4B",
+            "desc": [
+                "Increment the value at %address% in memory, if the %carry% flag is set.",
+                "Side effect: Result of computation is stored in %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIA  RSTB",
+                "ALO  OPTN1  RIA  FRI",
+                "IST  OPTN3  ARA  ROA  STR"
+            ],
+            "manual_pos": 11
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "DECC A",
+            "verbose": "dec cont",
+            "hex": "4C",
+            "desc": [
+                "Decrement the %A% register, unless the %carry% flag is set."
+            ],
+            "controls": [
+                "RSTB  OPTN1 AIB ALO  RIA  FRI  STR"
+            ],
+            "manual_pos": 12
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "DECC [%]",
+            "verbose": "dec cont %",
+            "hex": "4D",
+            "desc": [
+                "Decrement the value at %address% in memory, unless the %carry% flag is set.",
+                "Side effect: Result of computation is stored in %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIA  RSTB",
+                "AIB  OPTN1  ALO  RIA  FRI",
+                "IST  OPTN3  ARA  ROA  STR"
+            ],
+            "manual_pos": 12
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "SHLC [%]",
+            "verbose": "shift cont L, %",
+            "hex": "4E",
+            "desc": [
+                "Shift left the value at %address% in memory by one, with carry in set to the %carry% flag.",
+                "Side effect: Result of computation is stored in %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIA",
+                "OPTN0 OPTN1 ALO  RIA  FRI",
+                "IST  OPTN3  ARA  ROA  STR"
+            ],
+            "manual_pos": 13
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "SHRC [%]",
+            "verbose": "shift cont R, %",
+            "hex": "4F",
+            "desc": [
+                "Shift right the value at %address% in memory by one, with carry in set to the %carry% flag.",
+                "Side effect: Result of computation is stored in %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIA",
+                "OPTN0 OPTN1 AIB ALO  RIA  FRI",
+                "IST  OPTN3  ARA  ROA  STR"
+            ],
+            "manual_pos": 14
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "ROL [%]",
+            "verbose": "rot L, %",
+            "hex": "50",
+            "desc": [
+                "Bitwise rotates left the value at %address% in memory left by one.",
+                "Side effect: Result of computation is stored in %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIA",
+                "ALO OPTN0 OPTN3  FRI  RIA",
+                "ROA  OPTN3  ARA  IST  STR"
+            ],
+            "manual_pos": 15
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "ROR [%]",
+            "verbose": "rot R, %",
+            "hex": "51",
+            "desc": [
+                "Bitwise rotates left the value at %address% in memory right by one.",
+                "Side effect: Result of computation is stored in %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIA",
+                "ALO OPTN0 OPTN3  AIB  FRI  RIA",
+                "ROA  OPTN3  ARA  IST  STR"
+            ],
+            "manual_pos": 16
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "AND A, %",
+            "verbose": "and #%",
+            "hex": "52",
+            "desc": [
+                "Performs a bitwise AND between %value% and the %A% register, storing to the %A% register."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "RIA  ALO  ADC  OPTN3  AIA  AIB  AIO  FRI  STR"
+            ],
+            "manual_pos": 17
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "AND A, [%]",
+            "verbose": "and %",
+            "hex": "53",
+            "desc": [
+                "Performs a bitwise AND between the value at %address% and the %A% register, storing to the %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  RIB  ARA",
+                "RIA  ALO  ADC OPTN3  AIA  AIB  AIO  FRI  STR"
+            ],
+            "manual_pos": 18
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "OR A, %",
+            "verbose": "or #%",
+            "hex": "54",
+            "desc": [
+                "Performs a bitwise OR between %value% and the %A% register, storing to the %A% register."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "RIA  ALO  ADC  OPTN3  FRI  STR"
+            ],
+            "manual_pos": 19
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "OR A, [%]",
+            "verbose": "or %",
+            "hex": "55",
+            "desc": [
+                "Performs a bitwise OR between the value at %address% and the %A% register, storing to the %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  RIB  ARA",
+                "RIA  ALO  ADC  OPTN3  FRI  STR"
+            ],
+            "manual_pos": 20
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "XOR A, %",
+            "verbose": "xor #%",
+            "hex": "56",
+            "desc": [
+                "Performs a bitwise XOR between %value% and the %A% register, storing to the %A% register."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "RIA  ALO  ADC  FRI  STR"
+            ],
+            "manual_pos": 21
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "XOR A, [%]",
+            "verbose": "xor %",
+            "hex": "57",
+            "desc": [
+                "Performs a bitwise XOR between the value at %address% and the %A% register, storing to the %A% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  RIB  ARA",
+                "RIA  ALO  ADC  FRI  STR"
+            ],
+            "manual_pos": 22
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "SHL A",
+            "verbose": "shift L",
+            "hex": "58",
+            "desc": [
+                "Bitwise shifts the %A% register left by one."
+            ],
+            "controls": [
+                "ALO  OPTN0  RIA  FRI  STR"
+            ],
+            "manual_pos": 23
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "SHR A",
+            "verbose": "shift R",
+            "hex": "59",
+            "desc": [
+                "Bitwise shifts the %A% register right by one."
+            ],
+            "controls": [
+                "ALO  OPTN0  AIB  RIA  FRI  STR"
+            ],
+            "manual_pos": 24
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "ROL A",
+            "verbose": "rot L",
+            "hex": "5A",
+            "desc": [
+                "Bitwise rotates left the value of the %A% register left by one."
+            ],
+            "controls": [
+                "ALO OPTN0 OPTN3  FRI  RIA  STR"
+            ],
+            "manual_pos": 25
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "ROR A",
+            "verbose": "rot R",
+            "hex": "5B",
+            "desc": [
+                "Bitwise rotates left the value of the %A% register right by one."
+            ],
+            "controls": [
+                "ALO OPTN0 OPTN3 AIB  FRI  RIA  STR"
+            ],
+            "manual_pos": 26
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "ADD X, %",
+            "verbose": "add X, #%",
+            "hex": "5C",
+            "desc": [
+                "Adds %value% to the %X% register."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "ADRHI ALO RIX  FRI  STR"
+            ],
+            "manual_pos": 2
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "ADD X, [%]",
+            "verbose": "add X, %",
+            "hex": "5D",
+            "desc": [
+                "Adds the value at %address% in memory to the %X% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIB",
+                "ADRHI  ALO  RIX  FRI  STR"
+            ],
+            "manual_pos": 3
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "SUB X, %",
+            "verbose": "sub X, #%",
+            "hex": "5E",
+            "desc": [
+                "Subtracts %value% from the %X% register."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "ADRHI AIB OPTN2 ALO  RIX  FRI  STR"
+            ],
+            "manual_pos": 5
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "SUB X, [%]",
+            "verbose": "sub X, %",
+            "hex": "5F",
+            "desc": [
+                "Subtracts the value at %address% in memory from the %X% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIB",
+                "ADRHI AIB OPTN2  ALO  RIX  FRI  STR"
+            ],
+            "manual_pos": 6
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "CMP X, %",
+            "verbose": "comp X, #%",
+            "hex": "60",
+            "desc": [
+                "Compares the value of the %X% register to %value%."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "OPTN2  ADRHI  AIB  FRI  STR"
+            ],
+            "manual_pos": 7
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "CMP X, [%]",
+            "verbose": "comp X, %",
+            "hex": "61",
+            "desc": [
+                "Compares the value of the %X% register to the value at %address% in memory."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIB",
+                "OPTN2 ADRHI AIB  FRI  STR"
+            ],
+            "manual_pos": 8
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "INC X",
+            "verbose": "inc X",
+            "hex": "62",
+            "desc": [
+                "Increments the value of the %X% register by one."
+            ],
+            "controls": [
+                "RSTB  RIX  ADRHI  OPTN2  ALO  FRI  STR"
+            ],
+            "manual_pos": 9
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "DEC X",
+            "verbose": "dec X",
+            "hex": "63",
+            "desc": [
+                "Decrements the value of the %X% register by one."
+            ],
+            "controls": [
+                "RSTB  RIX  ADRHI  AIB  ALO  FRI  STR"
+            ],
+            "manual_pos": 11
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "ADD Y, %",
+            "verbose": "add Y, #%",
+            "hex": "64",
+            "desc": [
+                "Adds %value% to the %Y% register."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "FCY  ALO  RIY  FRI  STR"
+            ],
+            "manual_pos": 2
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "ADD Y, [%]",
+            "verbose": "add Y, %",
+            "hex": "65",
+            "desc": [
+                "Adds the value at %address% in memory to the %Y% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIB",
+                "FCY  ALO  RIY  FRI  STR"
+            ],
+            "manual_pos": 3
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "SUB Y, %",
+            "verbose": "sub Y, #%",
+            "hex": "66",
+            "desc": [
+                "Subtracts %value% from the %Y% register."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "FCY  AIB  OPTN2  ALO  RIY  FRI  STR"
+            ],
+            "manual_pos": 5
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "SUB Y, [%]",
+            "verbose": "sub Y, %",
+            "hex": "67",
+            "desc": [
+                "Subtracts the value at %address% in memory from the %Y% register."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIB",
+                "FCY  AIB  OPTN2  ALO  RIY  FRI  STR"
+            ],
+            "manual_pos": 6
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "CMP Y, %",
+            "verbose": "comp Y, #%",
+            "hex": "68",
+            "desc": [
+                "Compares the value of the %Y% register to %value%."
+            ],
+            "controls": [
+                "ILD  RIB  INC",
+                "OPTN2 FCY AIB  FRI  STR"
+            ],
+            "manual_pos": 7
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "CMP Y, [%]",
+            "verbose": "comp Y, %",
+            "hex": "69",
+            "desc": [
+                "Compares the value of the %Y% register to the value at %address% in memory."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIB",
+                "OPTN2  FCY  AIB  ALO  FRI  STR"
+            ],
+            "manual_pos": 8
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "INC Y",
+            "verbose": "inc Y",
+            "hex": "6A",
+            "desc": [
+                "Increments the value of the %Y% register by one."
+            ],
+            "controls": [
+                "RSTB  RIY  FCY  OPTN2  ALO  FRI  STR"
+            ],
+            "manual_pos": 9
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "DEC Y",
+            "verbose": "dec Y",
+            "hex": "6B",
+            "desc": [
+                "Decrements the value of the %Y% register by one."
+            ],
+            "controls": [
+                "RSTB  RIY  FCY  AIB  ALO  FRI  STR"
+            ],
+            "manual_pos": 11
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "CALL (%)",
+            "verbose": "call pointer %",
+            "hex": "6C",
+            "desc": [
+                "Calls a subroutine according to the pointer at %address%."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  OPTN3  ARA  RIB",
+                "ILD  OPTN3  ARA  ADC  ISAHI",
+                "ROB  ISALO",
+                "IST  STA  COBLO  INC  OPTN0",
+                "IST  STA  COBHI  INC  OPTN0",
+                "JMP  ARA  STR"
+            ],
+            "manual_pos": 12
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "JMP (%)",
+            "verbose": "jump pointer %",
+            "hex": "6D",
+            "desc": [
+                "Jumps according to the pointer at %address%."
+            ],
+            "controls": [
+                "ILD  ISALO  INC",
+                "ILD  ISAHI  INC",
+                "ILD  ARA  RIB",
+                "ILD  ARA  ADC  ISAHI",
+                "ROB  ISALO",
+                "JMP  ARA  STR"
+            ],
+            "manual_pos": 12
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "MOV A, STL",
+            "verbose": "copy SL to A",
+            "hex": "6E",
+            "desc": [
+                "Sets the %A% register to the stack pointer."
+            ],
+            "controls": [
+                "RIA  STOLO  STR"
+            ],
+            "manual_pos": 13
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "MOV A, STH",
+            "verbose": "copy SH to A",
+            "hex": "6F",
+            "desc": [
+                "Sets the %A% register to the stack page."
+            ],
+            "controls": [
+                "RIA  STOHI  STR"
+            ],
+            "manual_pos": 14
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "MOV STL, A",
+            "verbose": "copy A to SL",
+            "hex": "70",
+            "desc": [
+                "Sets the stack pointer to the value of the %A% register."
+            ],
+            "controls": [
+                "ROA  STILO  STR"
+            ],
+            "manual_pos": 15
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "MOV STH, A",
+            "verbose": "copy A to SH",
+            "hex": "71",
+            "desc": [
+                "Sets the stack page to the value of the %A% register."
+            ],
+            "controls": [
+                "ROA  STIHI  STR"
+            ],
+            "manual_pos": 16
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "MOV F, A",
+            "verbose": "copy A to F",
+            "hex": "72",
+            "desc": [
+                "Sets the contents of the flag register to that of the %A% register."
+            ],
+            "controls": [
+                "ROA  FRIB  STR"
+            ],
+            "manual_pos": 9
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "MOV A, F",
+            "verbose": "copy F to A",
+            "hex": "73",
+            "desc": [
+                "Sets the contents of the %A% register to that of the flag register."
+            ],
+            "controls": [
+                "RIA  FROB  STR"
+            ],
+            "manual_pos": 10
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "RTI",
+            "verbose": "return interrupt",
+            "hex": "74",
+            "desc": [
+                "Returns and enables interrupts."
+            ],
+            "controls": [
+                "INC  OPTN0  ADRHI  FIRQ  FNMI",
+                "ILD  STA  ISAHI  INC  OPTN0  ADRHI",
+                "ILD  STA  ISALO",
+                "JMP  ARA  STR"
+            ],
+            "manual_pos": 11
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "SIRQ",
+            "verbose": "interrupt enable",
+            "hex": "79",
+            "desc": [
+                "Enables IRQ and NMI interrupts."
+            ],
+            "controls": [
+                "FIRQ  FNMI  STR"
+            ],
+            "manual_pos": 2
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "CIRQ",
+            "verbose": "interrupt disable",
+            "hex": "7A",
+            "desc": [
+                "Disables IRQ, but not NMI interrupts."
+            ],
+            "controls": [
+                "FIRQ  OPTN0  STR"
+            ],
+            "manual_pos": 3
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "GPTR [%]",
+            "verbose": "get pointer %",
+            "hex": "7B",
+            "desc": [
+                "Gets the pointer of address.",
+                "Stores low byte in X, high byte in Y.",
+                "Used to enable PIE in combination with pointers.",
+                "OMGWTF"
+            ],
+            "controls": [
+                "ILD  RIX  INC",
+                "ILD  RIY  INC  OMGWTF",
+                "COBLO  RIB",
+                "ADRHI  ALO  RIX  FRI",
+                "COBHI  RIB",
+                "FCY  ALO  OPTN1  RIY  FRI  STR"
+            ],
+            "manual_pos": 4
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "VIRQ %",
+            "verbose": "irq config %",
+            "hex": "7C",
+            "desc": [
+                "Set up the IRQ interrupt vector."
+            ],
+            "controls": [
+                "ILD  INTIL  INC",
+                "ILD  INTIH  INC  STR"
+            ],
+            "manual_pos": 5
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 16,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "VNMI %",
+            "verbose": "nmi config %",
+            "hex": "7D",
+            "desc": [
+                "Set up the NMI interrupt vector."
+            ],
+            "controls": [
+                "ILD  ERRIL  INC",
+                "ILD  ERRIH  INC  STR"
+            ],
+            "manual_pos": 6
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "VST %",
+            "verbose": "stack config %",
+            "hex": "7E",
+            "desc": [
+                "Configures the stack to be in the memory page specified by %value%."
+            ],
+            "controls": [
+                "ILD  STIHI  INC",
+                "STILO  STR"
+            ],
+            "manual_pos": 7
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "HLT",
+            "verbose": "halt",
+            "hex": "7F",
+            "desc": [
+                "Halt execution."
+            ],
+            "controls": [
+                "HLT",
+                "STR"
+            ],
+            "manual_pos": 8
+        }
+    ]
+}

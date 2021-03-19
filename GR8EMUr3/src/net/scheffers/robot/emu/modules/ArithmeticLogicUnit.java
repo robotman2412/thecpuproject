@@ -1,6 +1,8 @@
-package net.scheffers.robot.emu;
+package net.scheffers.robot.emu.modules;
 
 import jutils.guiv2.GUIElement;
+import net.scheffers.robot.emu.GR8EMUConstants;
+import net.scheffers.robot.emu.GR8EMUr3_1;
 import processing.core.PApplet;
 import processing.core.PConstants;
 
@@ -17,7 +19,7 @@ public class ArithmeticLogicUnit extends GUIElement implements PConstants, GR8EM
 	public boolean isNegative;
 	
 	public ArithmeticLogicUnit(PApplet p, int x, int y, String name) {
-		super(p, x, y, thingyWidth, 2 * thingyHeight);
+		super(p, x, y, thingyWidth, thingyHeight);
 		this.name = name;
 	}
 	
@@ -33,7 +35,7 @@ public class ArithmeticLogicUnit extends GUIElement implements PConstants, GR8EM
 		p.strokeWeight(1);
 		p.pushMatrix();
 		p.translate(x, y);
-		p.rect(0, 0, thingyWidth, 2 * thingyHeight);
+		p.rect(0, 0, thingyWidth, thingyHeight);
 		
 		p.textAlign(CENTER);
 		p.textFont(GR8EMUr3_1.font12, 12);
@@ -64,20 +66,6 @@ public class ArithmeticLogicUnit extends GUIElement implements PConstants, GR8EM
 			p.fill(lightBlueOff);
 		}
 		p.ellipse(19, 34, 16, 16);
-		// Carry flag.
-		if (GR8EMUr3_1.inst.emulator.instance.flagCout) {
-			p.fill(lightYellowOn);
-		} else {
-			p.fill(lightYellowOff);
-		}
-		p.ellipse(37, 34 + thingyHeight, 16, 16);
-		// Zero flag.
-		if (GR8EMUr3_1.inst.emulator.instance.flagZero) {
-			p.fill(lightBlueOn);
-		} else {
-			p.fill(lightBlueOff);
-		}
-		p.ellipse(19, 34 + thingyHeight, 16, 16);
 		if (selected == 1) {
 			p.noFill();
 			p.stroke(0xff03f4fc);
@@ -108,8 +96,6 @@ public class ArithmeticLogicUnit extends GUIElement implements PConstants, GR8EM
 		p.textFont(GR8EMUr3_1.font12, 12);
 		p.text("0", thingyWidth * 0.10f, 22);
 		p.text("C", thingyWidth * 0.19f, 22);
-		p.text("0", thingyWidth * 0.10f, 22 + thingyHeight);
-		p.text("C", thingyWidth * 0.19f, 22 + thingyHeight);
 		
 		p.popMatrix();
 	}

@@ -1,12 +1,9 @@
-package net.scheffers.robot.hyperasm.isa;
+package net.scheffers.robot.xasm.isa;
 
-import javafx.util.Pair;
 import net.scheffers.robot.hyperasm.AssemblerCore;
-import net.scheffers.robot.hyperasm.expression.Expression;
+import net.scheffers.robot.xasm.expression.Expression;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.util.List;
 
 public class InstructionDef {
 
@@ -23,14 +20,8 @@ public class InstructionDef {
         
     }
     
-    public InstructionDef(JSONObject raw, int isaWordLen, boolean verbose) {
-	    if (verbose) {
-	        tokenPattern = AssemblerCore.tokeniseLine(raw.getString("verbose"));
-        }
-	    else
-        {
-            tokenPattern = AssemblerCore.tokeniseLine(raw.getString("name"));
-        }
+    public InstructionDef(JSONObject raw, int isaWordLen) {
+	    tokenPattern = AssemblerCore.tokeniseLine(raw.getString("name"));
 	    singleWord = Expression.unhex(raw.getString("hex"));
 	    if (raw.has("args") && raw.getJSONArray("args").length() > 0) {
             JSONArray rawArgs = raw.getJSONArray("args");
@@ -95,7 +86,7 @@ public class InstructionDef {
         return def;
     }
     
-    public long[] getBytes(long[] resolvedArgs, int wordBits, List<Pair<Integer, Integer>> pieAddresses, long address) {
+    public long[] getBytes(long[] resolvedArgs, int wordBits) {
         switch (type) {
             case ONE_WORD:
                 if (resolvedArgs != null && resolvedArgs.length > 0) {
@@ -106,7 +97,7 @@ public class InstructionDef {
                 if (resolvedArgs.length > arguments.length) {
                     throw new RuntimeException("Got too many arguments for instruction!");
                 }
-                return getBytesArgumented(resolvedArgs, wordBits, pieAddresses, address);
+                return getBytesArgumented(resolvedArgs, wordBits);
             case COMPLEX:
                 if (resolvedArgs.length > complexArgLens.length) {
                     throw new RuntimeException("Got too many arguments for complex instruction!");
@@ -117,25 +108,10 @@ public class InstructionDef {
         }
     }
 
-    protected long[] getBytesArgumented(long[] resolvedArgs, int wordBits, List<Pair<Integer, Integer>> pieAddresses, long address) {
+    protected long[] getBytesArgumented(long[] resolvedArgs, int wordBits) {
         long[] out = new long[numWords];
         out[0] = singleWord;
         int indexial = 1;
-        boolean pie = false;
-        if (numArgs == 1 && arguments[0].numWords == 2) {
-            for (Pair<Integer, Integer> p : pieAddresses) {
-                if (resolvedArgs[0] >= p.getKey() && resolvedArgs[0] <= p.getValue()) {
-                    pie = true;
-                    break;
-                }
-            }
-            if (pie) {
-                long endAddress = address + numWords;
-                resolvedArgs[0] -= endAddress;
-                resolvedArgs[0] &= (1 << (wordBits * 2)) - 1;
-                out[0] |= 0x80;
-            }
-        }
         for (int x = 0; x < resolvedArgs.length; x++) {
             ArgumentInsnPart arg = arguments[x];
             long res = resolvedArgs[x];
