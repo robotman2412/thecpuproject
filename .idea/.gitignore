@@ -1,0 +1,11 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+/data/
+/gr8cpu_temp_lib/
+/Compression/bin/
+/CPUControlDebug/bin/
+/GR8EMUr3/bin/
+/HyperAssembler/bin/
+/ISHelper/bin/
+/out/
