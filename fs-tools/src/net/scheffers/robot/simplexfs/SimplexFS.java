@@ -280,7 +280,7 @@ public class SimplexFS {
 		for (; bufLen < 24 && header0[bufLen + 20] != 0; bufLen++);
 		String volumeName = new String(header0, 20, bufLen, StandardCharsets.US_ASCII);
 		// Root directory size.
-		int rootSize = header0[44] | ((header0[45] << 8) & 0xff00) | ((header0[46] << 16) & 0xff0000);
+		int rootSize = (header0[44] & 0xff) | ((header0[45] << 8) & 0xff00) | ((header0[46] << 16) & 0xff0000);
 		// TODO: fat checksum
 		
 		// Now, read the FATs.
@@ -307,25 +307,21 @@ public class SimplexFS {
 	public static void extractFile(int block, int size, int flags, byte[] header, byte[] fat, byte[][] sectors, File output, OutputStream metaOutput) throws IOException {
 		byte[] file = getRawFile(block, size, fat, sectors);
 		if ((flags & 0x4000) > 0) {
+			if (output.exists() && !output.isDirectory()) throw new IOException("File exists and is not directory!");
+			else if (!output.exists() && !output.mkdir()) throw new IOException("Could not make directory!");
 			// Extract directory.
 			int numEntries = (file[0] & 0xff) | (file[1] << 8);
-			for (int i = 0; i < numEntries; i++) {
-				int feflags = (file[2 + i * 16] & 0xff) | ((file[3 + i * 16] << 8) & 0xff00);
-				int feUid = (file[4 + i * 16] & 0xff) | ((file[5 + i * 16] << 8) & 0xff00);
-				int feSect = (file[6 + i * 16] & 0xff) | ((file[7 + i * 16] << 8) & 0xff00);
-				int feLen = (file[8 + i * 16] & 0xff) | ((file[9 + i * 16] << 8) & 0xff00) | ((file[10 + i * 16] << 16) & 0xff0000);
-				int feChksum = (file[11 + i * 16] & 0xff) | ((file[12 + i * 16] << 8) & 0xff00);
-				int feStrp = (file[13 + i * 16] & 0xff) | ((file[14 + i * 16]) & 0xff00);
-				feStrp += 4 + numEntries * 16;
-				int feEnd;
-				for (feEnd = feStrp; feEnd < file.length; feEnd ++) {
-					if (file[feEnd] == 0) break;
-				}
-				String fileName = new String(file, feStrp, feEnd - feStrp, StandardCharsets.US_ASCII);
-				String newPath = output.getAbsolutePath();
-				if (!newPath.endsWith("/") && !newPath.endsWith("\\")) newPath += "/";
-				newPath += fileName;
-				extractFile(feSect, feLen, feflags, header, fat, sectors, new File(newPath), metaOutput);
+			for (int i = 1; i < numEntries + 1; i++) {
+				int feFlags		= (file[    i * 32] & 0xff) | ((file[1  + i * 32] << 8) & 0xff00);
+				int feUid		= (file[2 + i * 32] & 0xff) | ((file[3  + i * 32] << 8) & 0xff00);
+				int feSect		= (file[4 + i * 32] & 0xff) | ((file[5  + i * 32] << 8) & 0xff00);
+				int feLen		= (file[6 + i * 32] & 0xff) | ((file[7  + i * 32] << 8) & 0xff00) | ((file[8 + i * 32] << 16) & 0xff0000);
+				int feChksum	= (file[9 + i * 32] & 0xff) | ((file[10 + i * 32] << 8) & 0xff00);
+				byte[] feName	= new byte[16];
+				System.arraycopy(file, 16 + i * 32, feName, 0, 16);
+				String fileName = new String(feName).split("\0")[0];
+				String newPath = output.getPath() + "/" + fileName;
+				extractFile(feSect, feLen, feFlags, header, fat, sectors, new File(newPath), metaOutput);
 			}
 		}
 		else
@@ -363,9 +359,13 @@ public class SimplexFS {
 			// Warn that chain is too long.
 			warn("Chain " + descChain(chain) + " is longer than expected length of " + (size + 255) / 256 + "!");
 		}
+		else if (chain.size() < (size + 255) / 256) {
+			// Warn that chain is too short.
+			warn("Chain " + descChain(chain) + " is shorter than expected length of " + (size + 255) / 256 + "!");
+		}
 		else
 		{
-			// Set correct length for content.
+			// Set correct length.
 			pool.bufferUsedLength = size;
 		}
 		return pool.copyToArray();
@@ -402,7 +402,7 @@ public class SimplexFS {
 		}
 		InsertedFile ins = new InsertedFile();
 		ins.fileSize = data.length;
-		int numBlocks = (data.length + 255) / 256;
+		int numBlocks = Math.max(1, (data.length + 255) / 256); // At least one block to satisfy SimplexFS constraints.
 		List<Integer> chain = new ArrayList<>(numBlocks);
 		int tableIndex = 4; // It's impossible to have a free block before this.
 		for (; tableIndex < sectors.length && chain.size() < numBlocks; tableIndex ++) {

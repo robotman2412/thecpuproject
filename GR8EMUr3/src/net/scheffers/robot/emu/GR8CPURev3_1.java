@@ -130,7 +130,7 @@ public class GR8CPURev3_1 {
 			0x02000308, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x02000348, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x02001808, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-			0x41900010, 0x40180ad8, 0x00080ac0, 0x02042000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+			0x40100010, 0x40180ad8, 0x40180ad0, 0x00080b48, 0x02042000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -144,8 +144,8 @@ public class GR8CPURev3_1 {
 			0x00400000, 0x02000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x02100a88, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-			0x01800010, 0x00180f50, 0x00181150, 0x000c2000, 0x02100a88, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-			0x01800010, 0x00180f50, 0x00181150, 0x00202000, 0x02100a88, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+			0x00181950, 0x00180f50, 0x00181150, 0x018c2010, 0x02100a88, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+			0x00181950, 0x00180f50, 0x00181150, 0x01a02010, 0x02100a88, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -341,14 +341,15 @@ public class GR8CPURev3_1 {
 	
 	// Registers.
 	public byte regA, regB, regX, regY, regIR, bus, stage, mode;
-	public short regPC, regAR, stackPtr, adrBus, alo;
+	public short regPC, regAR, stackPtr, adrBus, alo, regIRQ, regNMI;
 	
 	// State.
-	public boolean flagCout, flagZero, flagIRQ, flagNMI, flagHWI;
+	public boolean flagCout, flagZero, flagIRQ, flagNMI, flagHWI, wasHWI;
 	public byte[] rom;
 	public byte[] ram;
 	public int[] isa = defaultISA;
-	public int cyclesUntilInterrupt;
+	public int scheduledIRQ;
+	public int scheduledNMI;
 	
 	// Statistics.
 	public long numCycles;
@@ -358,6 +359,8 @@ public class GR8CPURev3_1 {
 	// Debugging.
 	public short[] breakpoints;
 	public byte skipping, skipDepth;
+	public boolean debugIRQ;
+	public boolean debugNMI;
 	
 	// Shitty internet.
 	public Socket currentSocket;
@@ -561,6 +564,31 @@ public class GR8CPURev3_1 {
 		return 0;
 	}
 	
+	/**
+	 * Called by the native library just before an interrupt is handled.
+	 * @param isNMI whether the interrupt was a non-maskable interrupt
+	 * @param isDebug whether the interrupt was caused by the debugger
+	 * @return whether to treat this as a breakpoint
+	 */
+	public boolean onInterrupt(boolean isNMI, boolean isDebug) {
+		if (isDebug) {
+			return false;
+		}
+		else
+		{
+			//TODO: maybe some timer things.
+			return false;
+		}
+	}
+	
+	public void triggerIRQ() {
+		debugIRQ = true;
+	}
+	
+	public void triggerNMI() {
+		debugNMI = true;
+	}
+	
 	public int tick(int tickTimes, int tickMode) {
 		int ret;
 		if (nativeLoadSuccess) {
@@ -570,14 +598,15 @@ public class GR8CPURev3_1 {
 			ret = -1;
 		}
 		if (volumeDirtyTime != 0 && System.currentTimeMillis() > volumeDirtyTime + 3000) {
+			final byte[] dup = volume.clone();
 			volumeDirtyTime = 0;
-			final byte[] dup = new byte[volume.length];
 			new Thread(() -> {
 				try {
 					IOUtils.saveBytes(volumeFile, dup);
 					System.out.println("Volume flushed to disk.");
 				} catch (IOException e) {
 					e.printStackTrace();
+					volumeDirtyTime = System.currentTimeMillis();
 				}
 				System.gc();
 			}).start();
@@ -606,10 +635,12 @@ public class GR8CPURev3_1 {
 			volume = new byte[0];
 			System.out.println("Volume removed.");
 			doWriteVolume = false;
+			volumeFile = null;
 		} else if (!location.exists()) {
 			volume = new byte[0];
 			System.out.println("Error: No such file.");
 			doWriteVolume = false;
+			volumeFile = null;
 		} else {
 			try {
 				volume = IOUtils.readBytes(location);
@@ -618,6 +649,7 @@ public class GR8CPURev3_1 {
 				e.printStackTrace();
 			}
 			doWriteVolume = !isReadOnly;
+			volumeFile = location;
 		}
 	}
 	
@@ -626,8 +658,10 @@ public class GR8CPURev3_1 {
 	public void reset() {
 		regA = regB = regX = regY = regIR = bus = stage = 0;
 		mode = 1;
-		regPC = regAR = stackPtr = adrBus = alo = 0;
+		regPC = regAR = stackPtr = adrBus = alo = regIRQ = regNMI = 0;
 		flagCout = flagZero = flagIRQ = flagNMI = flagHWI = false;
+		scheduledIRQ = scheduledNMI = -1;
+		numCycles = numInsns = numSubs = 0;
 		if (rom == null) {
 			rom = new byte[0];
 		}

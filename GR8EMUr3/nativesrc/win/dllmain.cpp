@@ -62,6 +62,8 @@ JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick(JNI
     jfieldID fldRegPC = env->GetFieldID(instanceClass, "regPC", "S");
     jfieldID fldRegAR = env->GetFieldID(instanceClass, "regAR", "S");
     jfieldID fldRegST = env->GetFieldID(instanceClass, "stackPtr", "S");
+    jfieldID fldRegIRQ = env->GetFieldID(instanceClass, "regIRQ", "S");
+    jfieldID fldRegNMI = env->GetFieldID(instanceClass, "regNMI", "S");
     jfieldID fldAlo = env->GetFieldID(instanceClass, "alo", "S");
 
     jfieldID fldFlagCout = env->GetFieldID(instanceClass, "flagCout", "Z");
@@ -69,6 +71,7 @@ JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick(JNI
     jfieldID fldFlagIRQ = env->GetFieldID(instanceClass, "flagIRQ", "Z");
     jfieldID fldFlagNMI = env->GetFieldID(instanceClass, "flagNMI", "Z");
     jfieldID fldFlagHWI = env->GetFieldID(instanceClass, "flagHWI", "Z");
+    jfieldID fldWasHWI = env->GetFieldID(instanceClass, "wasHWI", "Z");
     
     jfieldID fldStage = env->GetFieldID(instanceClass, "stage", "B");
     jfieldID fldMode = env->GetFieldID(instanceClass, "mode", "B");
@@ -86,6 +89,9 @@ JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick(JNI
     jfieldID fldNumInsns = env->GetFieldID(instanceClass, "numInsns", "J");
     jfieldID fldNumSubs = env->GetFieldID(instanceClass, "numSubs", "J");
 
+    jfieldID fldDebugIRQ = env->GetFieldID(instanceClass, "debugIRQ", "Z");
+    jfieldID fldDebugNMI = env->GetFieldID(instanceClass, "debugNMI", "Z");
+
     gr8cpurev3 cpu;
     cpu.bus = env->GetByteField(inst, fldBus);
     cpu.adrBus = env->GetShortField(inst, fldAdrBus);
@@ -99,6 +105,8 @@ JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick(JNI
     cpu.regPC = env->GetShortField(inst, fldRegPC);
     cpu.regAR = env->GetShortField(inst, fldRegAR);
     cpu.stackPtr = env->GetShortField(inst, fldRegST);
+    cpu.regIRQ = env->GetShortField(inst, fldRegIRQ);
+    cpu.regNMI = env->GetShortField(inst, fldRegNMI);
     cpu.alo = env->GetShortField(inst, fldAlo);
 
     cpu.stage = env->GetByteField(inst, fldStage);
@@ -109,6 +117,7 @@ JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick(JNI
     cpu.flagIRQ = env->GetBooleanField(inst, fldFlagIRQ);
     cpu.flagNMI = env->GetBooleanField(inst, fldFlagNMI);
     cpu.flagHWI = env->GetBooleanField(inst, fldFlagHWI);
+    cpu.wasHWI = env->GetBooleanField(inst, fldWasHWI);
 
     cpu.skipping = env->GetByteField(inst, fldSkip);
     cpu.skipDepth = env->GetShortField(inst, fldSkipDepth);
@@ -130,6 +139,13 @@ JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick(JNI
     cpu.breakpoints = (uint16_t *) env->GetShortArrayElements(brksArr, NULL);
     cpu.isaRom = (uint32_t *) env->GetIntArrayElements(isaArr, NULL);
 
+    cpu.numCycles = env->GetLongField(inst, fldNumCycles);
+    cpu.numInsns = env->GetLongField(inst, fldNumInsns);
+    cpu.numSubs = env->GetLongField(inst, fldNumSubs);
+
+    cpu.debugIRQ = env->GetBooleanField(inst, fldDebugIRQ);
+    cpu.debugNMI = env->GetBooleanField(inst, fldDebugNMI);
+
     int res = gr8cpurev3_tick(&cpu, nCycles, tickMode);
 
     env->ReleaseByteArrayElements(ramArr, (jbyte *) cpu.ram, 0);
@@ -149,6 +165,8 @@ JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick(JNI
     env->SetShortField(inst, fldRegPC, cpu.regPC);
     env->SetShortField(inst, fldRegAR, cpu.regAR);
     env->SetShortField(inst, fldRegST, cpu.stackPtr);
+    env->SetShortField(inst, fldRegIRQ, cpu.regIRQ);
+    env->SetShortField(inst, fldRegNMI, cpu.regNMI);
     env->SetShortField(inst, fldAlo, cpu.alo);
     
     env->SetByteField(inst, fldStage, cpu.stage);
@@ -159,9 +177,17 @@ JNIEXPORT jint JNICALL Java_net_scheffers_robot_emu_GR8CPURev3_11_nativeTick(JNI
     env->SetBooleanField(inst, fldFlagNMI, cpu.flagNMI);
     env->SetBooleanField(inst, fldFlagIRQ, cpu.flagIRQ);
     env->SetBooleanField(inst, fldFlagHWI, cpu.flagHWI);
+    env->SetBooleanField(inst, fldWasHWI, cpu.wasHWI);
 
     env->SetByteField(inst, fldSkip, cpu.skipping);
     env->SetShortField(inst, fldSkipDepth, cpu.skipDepth);
+    
+    env->SetLongField(inst, fldNumCycles, cpu.numCycles);
+    env->SetLongField(inst, fldNumInsns, cpu.numInsns);
+    env->SetLongField(inst, fldNumSubs, cpu.numSubs);
+
+    env->SetBooleanField(inst, fldDebugIRQ, cpu.debugIRQ);
+    env->SetBooleanField(inst, fldDebugNMI, cpu.debugNMI);
 
     //_flushall();
     

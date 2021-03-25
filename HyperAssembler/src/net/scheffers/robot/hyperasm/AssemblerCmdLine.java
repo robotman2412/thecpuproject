@@ -66,6 +66,7 @@ public class AssemblerCmdLine {
 					System.err.println(error.getMessage());
 					System.err.println();
 				}
+				System.exit(1);
 			}
 		} catch (IOException e) {
 			System.err.println("Could not access input file(s)!");

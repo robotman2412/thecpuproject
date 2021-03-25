@@ -6,13 +6,15 @@ import net.scheffers.robot.hyperasm.AssemblerCore;
 import net.scheffers.robot.hyperasm.Pass2Out;
 import net.scheffers.robot.xasm.expression.Expression;
 import processing.core.PApplet;
+import processing.core.PImage;
+import processing.event.MouseEvent;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class Debugger extends PApplet {
+public class Debugger extends PApplet implements GR8EMUConstants {
 	
 	public final GR8EMUr3_1 emu;
 	public final GR8CPURev3_1 cpu;
@@ -26,11 +28,16 @@ public class Debugger extends PApplet {
 	 */
 	public TextureButton resetButton, playButton, pauseButton, cycleButton, stepOverButton, stepInButton, stepOutButton;
 	public TextInput evalInput;
-	public Button setBreakButton;
+	public Button setBreakButton, triggerIRQ, triggerNMI;
 	public GUIScreen screen;
 	public int tabulations = 12;
 	public short evaluated;
+	public int evalLength;
+	public int asmOffset;
+	public short lastPC;
 	public boolean hasTheEval;
+	
+	public PImage iconImage;
 	
 	public Set<Short> breakpoints = new HashSet<>();
 	
@@ -162,7 +169,7 @@ public class Debugger extends PApplet {
 	
 	@Override
 	public void settings() {
-		size(570, 400);
+		size(680, 300);
 	}
 	
 	@Override
@@ -172,6 +179,10 @@ public class Debugger extends PApplet {
 		surface.setResizable(true);
 		
 		screen = new GUIScreen(this);
+		
+		if (iconImage != null) {
+			surface.setIcon(iconImage);
+		}
 		
 		//region gui
 		resetButton = new TextureButton(this, 0, 5, 40, 40, false, new TextureButtonStyle(
@@ -214,6 +225,12 @@ public class Debugger extends PApplet {
 		
 		setBreakButton = new Button(this, 440, 10, 120, 20, "set breakpoint", false, this::buttonBreaks);
 		screen.add(setBreakButton);
+		
+		triggerIRQ = new Button(this, 570, 10, 40, 20, "IRQ", false, cpu::triggerIRQ);
+		screen.add(triggerIRQ);
+		
+		triggerIRQ = new Button(this, 620, 10, 40, 20, "NMI", false, cpu::triggerNMI);
+		screen.add(triggerIRQ);
 		//endregion gui
 	}
 	
@@ -225,8 +242,13 @@ public class Debugger extends PApplet {
 		screen.render();
 		if (hasTheEval) {
 			fill(0xff3f3f3f);
-			text(String.format("= $%04x ($%02x)", evaluated, cpu.ram[(int) evaluated & 0xffff]), 380, 42);
+			StringBuilder bin = new StringBuilder(evalLength * 2);
+			for (int i = evalLength - 1; i >= 0; i--) {
+				bin.append(String.format("%02x", cpu.ram[(i + evaluated) & 0xffff]));
+			}
+			text(String.format("= $%04x ($%s)", evaluated, bin), 380, 42);
 		}
+		
 		pauseButton.enabled = emu.emulator.doTick;
 		playButton.enabled = !emu.emulator.doTick;
 		cycleButton.enabled = !emu.emulator.doTick;
@@ -247,7 +269,11 @@ public class Debugger extends PApplet {
 		translate(0, 50);
 		int numDisp = (int) ((height - 50) / lineHeight + 0.5000000001);
 		int length = dump.lineLengths.length;
-		int offset = addressToIndex(cpu.regPC);
+		if (addressToIndex(cpu.regPC) != addressToIndex(lastPC)) {
+			asmOffset = addressToIndex(cpu.regPC);
+			lastPC = cpu.regPC;
+		}
+		int offset = asmOffset;
 		if (offset >= length) offset = length - numDisp;
 		if (offset <= 0) offset = 0;
 		int yOffset = 0;
@@ -374,10 +400,26 @@ public class Debugger extends PApplet {
 			dump = emu.assemblyData;
 		}
 		try {
-			long[] heck = Expression.resolve("", AssemblerCore.tokeniseLine(evalInput.text), dump, 0);
-			if (heck.length == 1) {
-				hasTheEval = true;
-				evaluated = (short) heck[0];
+			int index = evalInput.text.lastIndexOf(':');
+			if (index == -1) {
+				long[] heck = Expression.resolve("", AssemblerCore.tokeniseLine(evalInput.text.trim()), dump, 0);
+				if (heck.length == 1) {
+					hasTheEval = true;
+					evaluated = (short) heck[0];
+					evalLength = 1;
+				}
+			} else {
+				String pre = evalInput.text.substring(0, index).trim();
+				String post = evalInput.text.substring(index + 1).trim();
+				long[] heck = Expression.resolve("", AssemblerCore.tokeniseLine(pre), dump, 0);
+				long[] len = Expression.resolve("", AssemblerCore.tokeniseLine(post), dump, 0);
+				if (heck.length == 1) {
+					hasTheEval = true;
+					evaluated = (short) heck[0];
+					if (len.length == 1) {
+						evalLength = (int) len[0];
+					}
+				}
 			}
 		} catch (Exception ignored) {
 			
@@ -394,10 +436,17 @@ public class Debugger extends PApplet {
 		if (mouseY < 50 || mouseX > 80) {
 			return;
 		}
+		float spaceWidth = textWidth(' ');
 		float lineHeight = 13;
+		float lineOffset = 2 + spaceWidth * 11;
+		translate(0, 50);
 		int numDisp = (int) ((height - 50) / lineHeight + 0.5000000001);
 		int length = dump.lineLengths.length;
-		int offset = addressToIndex(cpu.regPC);
+		if (addressToIndex(cpu.regPC) != addressToIndex(lastPC)) {
+			asmOffset = addressToIndex(cpu.regPC);
+			lastPC = cpu.regPC;
+		}
+		int offset = asmOffset;
 		if (offset >= length) offset = length - numDisp;
 		if (offset <= 0) offset = 0;
 		int yOffset = 0;
@@ -447,6 +496,37 @@ public class Debugger extends PApplet {
 	@Override
 	public void mouseReleased() {
 		screen.mouseReleased();
+	}
+	
+	@Override
+	public void mouseWheel(MouseEvent event) {
+		Pass2Out dump = emu.assemblyData;
+		if (dump == null) {
+			return;
+		}
+		int amount = event.getCount();
+		int length = dump.lineLengths.length;
+		if (amount < 0) {
+			for (int i = asmOffset; i > 0 && amount <= 0; i--) {
+				if (dump.tokensOut[i] != null && dump.tokensOut[i].length > 0) {
+					if (dump.tokensOut[i].length == 1 && dump.tokensOut[i][0].length() == 0) {
+						continue;
+					}
+					amount ++;
+					asmOffset = i;
+				}
+			}
+		} else if (amount > 0) {
+			for (int i = asmOffset; i < length && amount >= 0; i++) {
+				if (dump.tokensOut[i] != null && dump.tokensOut[i].length > 0) {
+					if (dump.tokensOut[i].length == 1 && dump.tokensOut[i][0].length() == 0) {
+						continue;
+					}
+					amount --;
+					asmOffset = i;
+				}
+			}
+		}
 	}
 	
 	@Override

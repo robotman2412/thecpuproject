@@ -28,10 +28,10 @@
                 "Pushes the PC and jumps to the interrupt request handler."
             ],
             "controls": [
-                "FIRQ  FNMI  OPTN0",
+                "IST  STA  FROB   INC  OPTN0",
                 "IST  STA  COBLO  INC  OPTN0",
                 "IST  STA  COBHI  INC  OPTN0",
-                "INTRA  JMP",
+                "INTRA  JMP  FIRQ  FNMI  OPTN0",
                 "ILD  IRI  INC  STR"
             ]
         },
@@ -43,10 +43,10 @@
                 "Pushes the PC and jumps to the non-maskable interrupt handler."
             ],
             "controls": [
-                "FIRQ  FNMI  OPTN0",
+                "IST  STA  FROB   INC  OPTN0",
                 "IST  STA  COBLO  INC  OPTN0",
                 "IST  STA  COBHI  INC  OPTN0",
-                "ERRA  JMP",
+                "ERRA  JMP  FIRQ  FNMI  OPTN0",
                 "ILD  IRI  INC  STR"
             ]
         }
@@ -2546,9 +2546,10 @@
                 "Returns and enables interrupts."
             ],
             "controls": [
-                "INC  OPTN0  ADRHI  FIRQ  FNMI",
+                "INC  OPTN0  ADRHI",
                 "ILD  STA  ISAHI  INC  OPTN0  ADRHI",
-                "ILD  STA  ISALO",
+                "ILD  STA  ISALO  INC  OPTN0  ADRHI",
+				"ILD  STA  FRIB",
                 "JMP  ARA  STR"
             ],
             "manual_pos": 11

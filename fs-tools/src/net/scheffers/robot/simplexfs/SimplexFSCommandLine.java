@@ -86,7 +86,7 @@ public class SimplexFSCommandLine {
         }
         else
         {
-            SimplexFS.unpackSimplexFS(new FileInputStream(new File(src)), new File(dest), null);
+            SimplexFS.unpackSimplexFS(new FileInputStream(src), new File(dest), null);
         }
     }
 

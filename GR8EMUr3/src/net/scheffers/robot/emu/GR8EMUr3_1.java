@@ -15,6 +15,7 @@ import processing.core.PImage;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.Random;
 
 public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	
@@ -52,6 +53,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	public ArithmeticLogicUnit alu;
 	public RegisterFlags regF;
 	public Register16Bit regPC, regAR, stackPtr, adrBus;
+	public Register16Bit regIRQ, regNMI;
 	//endregion GUI
 	
 	//region speed
@@ -82,6 +84,8 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	 * File mapped to virtual drive.
 	 */
 	public Button ejectDrive;
+	/** Whether the image is read-only. */
+	public CheckBox readOnlyImage;
 	
 	/**
 	 * Memory mapped IO address inputs.
@@ -136,6 +140,11 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	 * Images for step out button.
 	 */
 	public PImage debug, debugHover, debugPressed, debugDisabled;
+	/**
+	 * Icon images.
+	 */
+	public PImage[] iconImages;
+	public PImage iconImage;
 	//endregion images
 	
 	/**
@@ -267,6 +276,13 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		debugHover = loadJarImage("debug_hover.png");
 		debugPressed = loadJarImage("debug_pressed.png");
 		debugDisabled = loadJarImage("debug_disabled.png");
+		
+		iconImages = new PImage[] {
+			loadJarImage("icon_small_purple.png"),
+			loadJarImage("icon_small_blue.png"),
+			loadJarImage("icon_small_red.png")
+		};
+		
 		//endregion loading
 		
 		//region tty
@@ -400,6 +416,16 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		stackPtr.valueUpdater = (v) -> emulator.instance.stackPtr = (short) (int) v;
 		screen.add(stackPtr);
 		
+		regIRQ = new Register16Bit(this, 2 * thingyWidth, 3 * thingyHeight, "IRQ register");
+		regIRQ.valueSupplier = () -> (int) emulator.instance.regIRQ;
+		regIRQ.valueUpdater = (v) -> emulator.instance.regIRQ = (short) (int) v;
+		screen.add(regIRQ);
+		
+		regNMI = new Register16Bit(this, 2 * thingyWidth, 4 * thingyHeight, "NMI register");
+		regNMI.valueSupplier = () -> (int) emulator.instance.regNMI;
+		regNMI.valueUpdater = (v) -> emulator.instance.regNMI = (short) (int) v;
+		screen.add(regNMI);
+		
 		controlUnit = new ControlUnit(this, 2 * thingyWidth, 5 * thingyHeight, emulator);
 		screen.add(controlUnit);
 		//endregion modules
@@ -415,12 +441,35 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		
 		ejectDrive = new Button(this, 2 * thingyWidth + 150, 80, 100, 20, "eject disk", false, this::ejectDrive);
 		screen.add(ejectDrive);
+		
+		readOnlyImage = new CheckBox(this, 2 * thingyWidth + 260, 80, 20, 20, ()->{
+			emulator.instance.doWriteVolume = !readOnlyImage.value;
+		});
+		readOnlyImage.value = true;
+		screen.add(readOnlyImage);
+		screen.add(new Text(this, 2 * thingyWidth + 285, 95, "read-only"));
 		//endregion settings
 		
 		if (GR8CPURev3_1.nativeLoadSuccess) {
 			emulator.start();
 		}
 		debugger = new Debugger();
+		
+		//region icon selection
+		Random random = new Random();
+		for (int i = 0; i < iconImages.length; i++) {
+			int a = random.nextInt(iconImages.length);
+			int b = random.nextInt(iconImages.length - 1);
+			if (b == a) b ++;
+			PImage temp = iconImages[a];
+			iconImages[a] = iconImages[b];
+			iconImages[b] = temp;
+		}
+		iconImage = iconImages[0];
+		debugger.iconImage = iconImages[1];
+		surface.setIcon(iconImage);
+		//endregion icon selection
+		
 		runSketch(new String[]{"Debugger"}, debugger);
 		surface.setResizable(true);
 	}
@@ -430,7 +479,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		background(255);
 		
 		if (!GR8CPURev3_1.nativeLoadSuccess) {
-			surface.setSize(570, 130);
+			surface.setSize(670, 130);
 			fill(0);
 			textFont(font48, 48);
 			text("library load failed", 10, 48);
@@ -717,6 +766,15 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		public static final int EXC_NOINSN = 4;
 		public static final int EXC_WAIT_STEP = 5;
 		public static final int EXC_RESET = 6;
+		public static final int EXC_TCON = 7;
+		
+		public static final String[] exitCodes = {
+				"Normal",
+				"CPU halted",
+				"Breakpoint hit",
+				"Stack overflow",
+				"No instruction"
+		};
 		
 		public GR8CPURev3_1 instance;
 		
@@ -836,7 +894,11 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 				}
 				if (res != 0) {
 					doTick = false;
-					System.err.println("Emulator stopped with code " + res);
+					if (res < 0 || res >= exitCodes.length) {
+						System.err.println("Emulator stopped with code " + res);
+					} else {
+						System.err.println("Emulator stopped: " + exitCodes[res]);
+					}
 				}
 				synchronized (this) {
 					notifyAll();
