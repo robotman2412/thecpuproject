@@ -7,10 +7,21 @@
     </content>
     <orderEntry type="jdk" jdkName="IntelliJ IDEA Community Edition IC-192.6817.14" jdkType="IDEA JDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="GR8EMUr3_1" level="project" />
+    <orderEntry type="module" module-name="HyperAssembler" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://C:/Program Files (x86)/processing-3.5.4/core/library/core.jar!/" />
+          <root url="jar://$MODULE_DIR$/../HyperAssembler/json-20201115.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../JUtils.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -20,17 +31,6 @@
       <library>
         <CLASSES>
           <root url="jar://$USER_HOME$/eclipse-workspace/JUtils.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="library" name="GR8EMUr3_1" level="project" />
-    <orderEntry type="module" module-name="HyperAssembler" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../HyperAssembler/json-20201115.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
