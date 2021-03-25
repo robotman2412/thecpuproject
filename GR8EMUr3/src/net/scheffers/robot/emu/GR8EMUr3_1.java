@@ -84,7 +84,9 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	 * File mapped to virtual drive.
 	 */
 	public Button ejectDrive;
-	/** Whether the image is read-only. */
+	/**
+	 * Whether the image is read-only.
+	 */
 	public CheckBox readOnlyImage;
 	
 	/**
@@ -277,10 +279,10 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		debugPressed = loadJarImage("debug_pressed.png");
 		debugDisabled = loadJarImage("debug_disabled.png");
 		
-		iconImages = new PImage[] {
-			loadJarImage("icon_small_purple.png"),
-			loadJarImage("icon_small_blue.png"),
-			loadJarImage("icon_small_red.png")
+		iconImages = new PImage[]{
+				loadJarImage("icon_small_purple.png"),
+				loadJarImage("icon_small_blue.png"),
+				loadJarImage("icon_small_red.png")
 		};
 		
 		//endregion loading
@@ -442,7 +444,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		ejectDrive = new Button(this, 2 * thingyWidth + 150, 80, 100, 20, "eject disk", false, this::ejectDrive);
 		screen.add(ejectDrive);
 		
-		readOnlyImage = new CheckBox(this, 2 * thingyWidth + 260, 80, 20, 20, ()->{
+		readOnlyImage = new CheckBox(this, 2 * thingyWidth + 260, 80, 20, 20, () -> {
 			emulator.instance.doWriteVolume = !readOnlyImage.value;
 		});
 		readOnlyImage.value = true;
@@ -460,7 +462,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		for (int i = 0; i < iconImages.length; i++) {
 			int a = random.nextInt(iconImages.length);
 			int b = random.nextInt(iconImages.length - 1);
-			if (b == a) b ++;
+			if (b >= a) b++;
 			PImage temp = iconImages[a];
 			iconImages[a] = iconImages[b];
 			iconImages[b] = temp;
@@ -564,8 +566,8 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	}
 	
 	public void ttyNewline() {
-		for (int i = 0; i < ttyHeight - 1; i++) {
-			ttyBuffer[i] = ttyBuffer[i + 1];
+		if (ttyHeight - 1 >= 0) {
+			System.arraycopy(ttyBuffer, 1, ttyBuffer, 0, ttyHeight - 1);
 		}
 		ttyBuffer[ttyHeight - 1] = new char[ttyWidth];
 		ttyCursorPos = 0;
