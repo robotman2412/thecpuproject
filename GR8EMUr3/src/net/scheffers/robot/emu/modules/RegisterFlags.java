@@ -2,12 +2,12 @@ package net.scheffers.robot.emu.modules;
 
 import jutils.guiv2.GUIElement;
 import net.scheffers.robot.emu.GR8CPURev3_1;
-import net.scheffers.robot.emu.GR8EMUConstants;
-import net.scheffers.robot.emu.GR8EMUr3_1;
+import net.scheffers.robot.emu.EMUConstants;
+import net.scheffers.robot.emu.Emulator;
 import processing.core.PApplet;
 import processing.core.PConstants;
 
-public class RegisterFlags extends GUIElement implements PConstants, GR8EMUConstants {
+public class RegisterFlags extends GUIElement implements PConstants, EMUConstants {
 	
 	public String name;
 	
@@ -26,11 +26,11 @@ public class RegisterFlags extends GUIElement implements PConstants, GR8EMUConst
 		p.rect(0, 0, thingyWidth, thingyHeight);
 		
 		p.textAlign(CENTER);
-		p.textFont(GR8EMUr3_1.font12, 12);
+		p.textFont(Emulator.font12, 12);
 		p.fill(0);
 		p.text(name, thingyWidth * 0.5f, 14);
 		
-		GR8CPURev3_1 inst = GR8EMUr3_1.inst.emulator.instance;
+		GR8CPURev3_1 inst = Emulator.inst.emuThread.cpu;
 		flagBit(0, inst.flagCout, "C");
 		flagBit(1, inst.flagZero, "0");
 		flagBit(2, inst.flagIRQ, "I");
@@ -50,7 +50,7 @@ public class RegisterFlags extends GUIElement implements PConstants, GR8EMUConst
 			p.fill(lightBlueOff);
 		}
 		p.ellipse(35 + 18 * x, 34, 16, 16);
-		p.textFont(GR8EMUr3_1.font12, 12);
+		p.textFont(Emulator.font12, 12);
 		p.stroke(0);
 		p.fill(0);
 		p.text(text, 35 + 18 * x, 54);
@@ -62,7 +62,7 @@ public class RegisterFlags extends GUIElement implements PConstants, GR8EMUConst
 		if (p.mouseY < this.y + 25 || p.mouseY > this.y + 43 || x < 0 || x > 7) {
 			return;
 		}
-		GR8CPURev3_1 inst = GR8EMUr3_1.inst.emulator.instance;
+		GR8CPURev3_1 inst = Emulator.inst.emuThread.cpu;
 		switch (x) {
 			case(0): // Carry flag.
 				inst.flagCout ^= true;

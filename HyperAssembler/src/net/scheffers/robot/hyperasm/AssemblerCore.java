@@ -30,8 +30,8 @@ public class AssemblerCore {
 	
 	public static void realAssemblyTest() {
 		try {
-			InstructionSet isa = new InstructionSet(new File("D:\\logisim projects\\GR8CPU Rev3.2\\IS\\ISAx.json"));
-			Pass2Out out = simpleFullAssemble("D:\\logisim projects\\GR8CPU Rev3.2\\programs\\gr8nix\\gr8nix.asm", isa);
+			InstructionSet isa = new InstructionSet(new File("D:\\logisim projects\\GR8CPU Rev3.2\\IS\\ISAr4.json"), false);
+			Pass2Out out = simpleFullAssemble("D:\\logisim projects\\GR8CPU Rev3.2\\programs r4\\testing.asm", isa);
 			
 			for (CompilerWarning warning : out.warnings) {
 				System.out.println(warning.source);
@@ -45,8 +45,8 @@ public class AssemblerCore {
 				System.err.println();
 			}
 			
-			out.saveLHF(new File("D:\\logisim projects\\GR8CPU Rev3.2\\programs\\gr8nix\\gr8nix.test.hex"));
-			out.saveOldDump(new File("D:\\logisim projects\\GR8CPU Rev3.2\\programs\\gr8nix\\gr8nix.test.hex.dump"));
+			out.saveLHF(new File("D:\\logisim projects\\GR8CPU Rev3.2\\programs r4\\testing.test.hex"));
+			out.saveOldDump(new File("D:\\logisim projects\\GR8CPU Rev3.2\\programs r4\\testing.test.hex.dump"));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -288,6 +288,7 @@ public class AssemblerCore {
 		int nLines = in.tokensOut.length;
 		Pass1Out out = new Pass1Out(in, nLines);
 		out.isa = isa;
+		String labelPrefix = "";
 		for_pass1: for (int i = 0; i < nLines; i++) {
 			out.lineStartAddresses[i] = currentAddress;
 			String[] line = out.tokensOut[i];
@@ -323,12 +324,18 @@ public class AssemblerCore {
 					));
 					continue;
 				} else if (line.length == 1 || !line[1].equals("=")) {
-					if (out.labels.containsKey(line[0])) {
-						Label label = out.labels.get(line[0]);
+					String labelName = line[0];
+					if (labelName.charAt(0) == '.') {
+						labelName = labelPrefix + labelName;
+					} else {
+						labelPrefix = labelName.split("\\.")[0];;
+					}
+					if (out.labels.containsKey(labelName)) {
+						Label label = out.labels.get(labelName);
 						label.address = currentAddress;
 						if (label.lineNum != 0) {
 							out.warnings.add(new CompilerWarning(out.tokensSourceFiles[i], out.tokenLineNums[i],
-									"Label \"" + line[0] + "\" from file " + label.fileName + " line " + label.lineNum +
+									"Label \"" + labelName + "\" from file " + label.fileName + " line " + label.lineNum +
 											" redefined in file " + out.tokensSourceFiles[i] + " line " + out.tokenLineNums[i] + "."
 							));
 						} else {
@@ -336,7 +343,7 @@ public class AssemblerCore {
 							label.lineNum = out.tokenLineNums[i];
 						}
 					} else {
-						out.labels.put(line[0], new Label(out.tokensSourceFiles[i], out.tokenLineNums[i], currentAddress, false));
+						out.labels.put(labelName, new Label(out.tokensSourceFiles[i], out.tokenLineNums[i], currentAddress, false));
 					}
 				} else if (line.length == 2) {
 					out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i],
@@ -344,14 +351,20 @@ public class AssemblerCore {
 					));
 					continue;
 				} else {
+					String labelName = line[0];
+					if (labelName.charAt(0) == '.') {
+						labelName = labelPrefix + labelName;
+					} else {
+						labelPrefix = labelName.split("\\.")[0];;
+					}
 					String[] expressionTokens = new String[line.length - 2];
 					System.arraycopy(line, 2, expressionTokens, 0, expressionTokens.length);
 					try {
-						long[] value = Expression.resolve("", expressionTokens, out, i);
+						long[] value = Expression.resolve(labelPrefix, expressionTokens, out, i);
 						if (value.length != 1) {
 							throw new Exception("Expected a number or character for label value.");
 						}
-						out.labels.put(line[0], new Label(out.tokensSourceFiles[i], out.tokenLineNums[i], value[0], false));
+						out.labels.put(labelName, new Label(out.tokensSourceFiles[i], out.tokenLineNums[i], value[0], false));
 					} catch (Exception e) {
 						out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i], e.getMessage()));
 					}
@@ -411,7 +424,7 @@ public class AssemblerCore {
 				String[] tokenyBoys = new String[line.length - 2];
 				System.arraycopy(line, 2, tokenyBoys, 0, tokenyBoys.length);
 				try {
-					long[] how = Expression.resolve("", tokenyBoys, out, i);
+					long[] how = Expression.resolve(labelPrefix, tokenyBoys, out, i);
 					if (how.length > 1) {
 						out.errors.add(new CompilerSyntaxError(out.tokensSourceFiles[i], out.tokenLineNums[i], "Unexpected string."));
 						continue;
@@ -439,8 +452,8 @@ public class AssemblerCore {
 					System.arraycopy(line, 2, arg0, 0, arg0.length);
 					System.arraycopy(line, split + 1, arg1, 0, arg1.length);
 					try {
-						long[] res0 = Expression.resolve("", arg0, out, i);
-						long[] res1 = Expression.resolve("", arg1, out, i);
+						long[] res0 = Expression.resolve(labelPrefix, arg0, out, i);
+						long[] res1 = Expression.resolve(labelPrefix, arg1, out, i);
 						if (res0.length != 1 || res1.length != 1) {
 							throw new Exception("Unexpected string.");
 						}
@@ -520,8 +533,14 @@ public class AssemblerCore {
 	public static Pass2Out pass2(Pass1Out in, InstructionSet isa, Charset stringCharset) {
 		Pass2Out out = new Pass2Out(in);
 		out.wordsOut = new long[(int) out.totalLength];
+		String labelPrefix = "";
 		for_pass2: for (int i = 0; i < out.tokensOut.length; i++) {
 			String[] line = out.tokensOut[i];
+			if (line.length >= 1) {
+				if (!line[0].startsWith(".") && isa.isValidLabelName(line[0])) {
+					labelPrefix = line[0].split("\\.")[0];
+				}
+			}
 			if (line.length > 1 && line[1].toLowerCase().matches("data|byte|bytes")) {
 				int lengthyBoie = 0;
 				int lastIndex = 2;
@@ -546,7 +565,7 @@ public class AssemblerCore {
 						else
 						{
 							try {
-								long[] res = Expression.resolve("", bullshite, out, i);
+								long[] res = Expression.resolve(labelPrefix, bullshite, out, i);
 								System.arraycopy(res, 0, out.wordsOut, (int) currentAddress, res.length);
 							} catch (Exception e) {
 								e.printStackTrace();
@@ -570,7 +589,7 @@ public class AssemblerCore {
 						else
 						{
 							try {
-								long[] res = Expression.resolve("", bullshite, out, i);
+								long[] res = Expression.resolve(labelPrefix, bullshite, out, i);
 								System.arraycopy(res, 0, out.wordsOut, (int) currentAddress, res.length);
 							} catch (Exception e) {
 								e.printStackTrace();
@@ -595,7 +614,7 @@ public class AssemblerCore {
 			long[] insnArgs = new long[insn.numArgs];
 			for (int x = 0; x < insnArgs.length; x++) {
 				try {
-					long[] arg = Expression.resolve("", new String[] {args[x]}, out, i);
+					long[] arg = Expression.resolve(labelPrefix, new String[] {args[x]}, out, i);
 					if (arg.length != 1) {
 						throw new Exception("Unexpected string.");
 					}

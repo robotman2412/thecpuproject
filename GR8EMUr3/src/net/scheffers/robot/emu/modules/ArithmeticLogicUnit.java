@@ -1,15 +1,15 @@
 package net.scheffers.robot.emu.modules;
 
 import jutils.guiv2.GUIElement;
-import net.scheffers.robot.emu.GR8EMUConstants;
-import net.scheffers.robot.emu.GR8EMUr3_1;
+import net.scheffers.robot.emu.EMUConstants;
+import net.scheffers.robot.emu.Emulator;
 import processing.core.PApplet;
 import processing.core.PConstants;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class ArithmeticLogicUnit extends GUIElement implements PConstants, GR8EMUConstants {
+public class ArithmeticLogicUnit extends GUIElement implements PConstants, EMUConstants {
 	
 	public Supplier<Integer> valueSupplier;
 	public Consumer<Integer> valueUpdater;
@@ -38,7 +38,7 @@ public class ArithmeticLogicUnit extends GUIElement implements PConstants, GR8EM
 		p.rect(0, 0, thingyWidth, thingyHeight);
 		
 		p.textAlign(CENTER);
-		p.textFont(GR8EMUr3_1.font12, 12);
+		p.textFont(Emulator.font12, 12);
 		p.fill(0);
 		p.text(name, thingyWidth * 0.5f, 14);
 		// Output le bits,thelol...
@@ -82,7 +82,7 @@ public class ArithmeticLogicUnit extends GUIElement implements PConstants, GR8EM
 			p.rect(131, 53, 57, 18);
 		}
 		
-		p.textFont(GR8EMUr3_1.font48, 24);
+		p.textFont(Emulator.font48, 24);
 		p.stroke(0);
 		p.fill(0);
 		p.text(String.format("%02x", value), thingyWidth * 0.20f, thingyHeight - 5);
@@ -93,7 +93,7 @@ public class ArithmeticLogicUnit extends GUIElement implements PConstants, GR8EM
 			p.text((byte) value, thingyWidth * 0.80f, thingyHeight - 5);
 		}
 		
-		p.textFont(GR8EMUr3_1.font12, 12);
+		p.textFont(Emulator.font12, 12);
 		p.text("0", thingyWidth * 0.10f, 22);
 		p.text("C", thingyWidth * 0.19f, 22);
 		

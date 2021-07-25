@@ -334,6 +334,7 @@ public class SimplexFS {
 	public static byte[] getRawFile(int block, int size, byte[] fat, byte[][] sectors) throws IOException {
 		BytePool pool = new BytePool(256);
 		List<Integer> chain = new ArrayList<>(10);
+		int numSect = Math.max(1, (size + 255) / 256);
 		while (true) {
 			int chainContent = (fat[block * 2] & 0xff) | ((fat[block * 2 + 1] << 8) & 0xff00);
 			if (chainContent == 0x0000) {
@@ -355,11 +356,11 @@ public class SimplexFS {
 			}
 			block = chainContent;
 		}
-		if (chain.size() > (size + 255) / 256) {
+		if (chain.size() > numSect) {
 			// Warn that chain is too long.
 			warn("Chain " + descChain(chain) + " is longer than expected length of " + (size + 255) / 256 + "!");
 		}
-		else if (chain.size() < (size + 255) / 256) {
+		else if (chain.size() < numSect) {
 			// Warn that chain is too short.
 			warn("Chain " + descChain(chain) + " is shorter than expected length of " + (size + 255) / 256 + "!");
 		}
@@ -426,7 +427,7 @@ public class SimplexFS {
 		if (sectors[chain.get(chain.size() - 1)] == null) {
 			sectors[chain.get(chain.size() - 1)] = new byte[256];
 		}
-		System.arraycopy(data, chain.size() * 256 - 256, sectors[chain.get(chain.size() - 1)], 0, data.length & 0xff);
+		System.arraycopy(data, chain.size() * 256 - 256, sectors[chain.get(chain.size() - 1)], 0, data.length - 256 * (chain.size() - 1));
 		ins.startingBlock = chain.get(0);
 		return ins;
 	}

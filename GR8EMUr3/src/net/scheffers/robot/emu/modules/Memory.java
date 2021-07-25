@@ -2,22 +2,23 @@ package net.scheffers.robot.emu.modules;
 
 import jutils.guiv2.GUIElement;
 import net.scheffers.robot.emu.GR8CPURev3_1;
-import net.scheffers.robot.emu.GR8EMUConstants;
-import net.scheffers.robot.emu.GR8EMUr3_1;
+import net.scheffers.robot.emu.EMUConstants;
+import net.scheffers.robot.emu.Emulator;
 import processing.core.PApplet;
 import processing.core.PConstants;
 
 import java.util.function.Supplier;
 
-public class Memory extends GUIElement implements GR8EMUConstants {
+public class Memory extends GUIElement implements EMUConstants {
 	
 	public Supplier<Number> addressSource;
 	public GR8CPURev3_1 cpu;
 	public int address;
 	public int offset;
-	public int selected = -1;
+	public int selectedIndex = -1;
 	public String formatStr = "%04x";
 	public String name;
+	public boolean isSelected;
 	
 	public Memory(PApplet p, int x, int y, String name) {
 		super(p, x, y, thingyWidth, thingyHeight * 4);
@@ -38,7 +39,7 @@ public class Memory extends GUIElement implements GR8EMUConstants {
 		p.rect(0, 0, thingyWidth, thingyHeight * 4);
 		
 		p.textAlign(PConstants.CENTER);
-		p.textFont(GR8EMUr3_1.font12, 12);
+		p.textFont(Emulator.font12, 12);
 		p.fill(0);
 		p.text(name, thingyWidth * 0.5f, 14);
 		
@@ -48,7 +49,7 @@ public class Memory extends GUIElement implements GR8EMUConstants {
 		p.fill(0);
 		p.textAlign(PConstants.LEFT);
 		
-		int thingy = (selected >= 0) ? selected : address;
+		int thingy = (selectedIndex >= 0) ? selectedIndex : address;
 		if (thingy < 32) {
 			offset = 0;
 		}
@@ -103,9 +104,9 @@ public class Memory extends GUIElement implements GR8EMUConstants {
 				}
 				
 				// Draw le value.
-				if (index == selected) {
+				if (index == selectedIndex) {
 					p.noStroke();
-					if (enabled) {
+					if (isSelected) {
 						p.fill(0xff0000ff);
 					} else {
 						p.fill(0xff7f7fcf);
@@ -126,7 +127,7 @@ public class Memory extends GUIElement implements GR8EMUConstants {
 			}
 		}
 		
-		p.textFont(GR8EMUr3_1.font12, 12);
+		p.textFont(Emulator.font12, 12);
 		
 		p.popMatrix();
 	}
@@ -136,10 +137,10 @@ public class Memory extends GUIElement implements GR8EMUConstants {
 		int selX = (p.mouseX - x - 41) / 18;
 		int selY = (p.mouseY - y - 19) / 13;
 		if (selX >= 0 && selX < 8 && selY >= 0 && selY < 21) {
-			selected = offset + selY * 8 + selX;
-			enabled = true;
+			selectedIndex = offset + selY * 8 + selX;
+			isSelected = true;
 		} else {
-			enabled = false;
+			isSelected = false;
 		}
 	}
 	
@@ -150,15 +151,15 @@ public class Memory extends GUIElement implements GR8EMUConstants {
 	
 	@Override
 	public void keyPressed() {
-		if (selected == -1 || !enabled) return;
+		if (selectedIndex == -1 || !isSelected) return;
 		int val;
 		// Read.
-		if (selected < cpu.rom.length) {
-			val = cpu.rom[selected];
-		} else if ((selected & 0xff00) == 0xfe00) {
-			val = cpu.readMMIO(selected, true);
+		if (selectedIndex < cpu.rom.length) {
+			val = cpu.rom[selectedIndex];
+		} else if ((selectedIndex & 0xff00) == 0xfe00) {
+			val = cpu.readMMIO(selectedIndex, true);
 		} else {
-			val = cpu.ram[selected];
+			val = cpu.ram[selectedIndex];
 		}
 		// Manipulate.
 		if (p.key >= '0' && p.key <= '9') {
@@ -171,62 +172,62 @@ public class Memory extends GUIElement implements GR8EMUConstants {
 			val = (val << 4) & 0xff;
 			val |= p.key - 'A' + 0x0a;
 		} else if (p.keyCode == PConstants.LEFT) {
-			selected--;
-			if (selected < 0) {
-				selected = 0;
+			selectedIndex--;
+			if (selectedIndex < 0) {
+				selectedIndex = 0;
 			}
 			return;
 		} else if (p.keyCode == PConstants.RIGHT) {
-			selected++;
-			if (selected > 0xffff) {
-				selected = 0xffff;
+			selectedIndex++;
+			if (selectedIndex > 0xffff) {
+				selectedIndex = 0xffff;
 			}
 			return;
 		} else if (p.keyCode == PConstants.UP) {
-			selected -= 8;
-			if (selected < 0) {
-				selected = 0;
+			selectedIndex -= 8;
+			if (selectedIndex < 0) {
+				selectedIndex = 0;
 			}
 			return;
 		} else if (p.keyCode == PConstants.DOWN) {
-			selected += 8;
-			if (selected > 0xffff) {
-				selected = 0xffff;
+			selectedIndex += 8;
+			if (selectedIndex > 0xffff) {
+				selectedIndex = 0xffff;
 			}
 			return;
 		} else if (p.keyCode == 0x21) { // Page up.
-			selected -= 256;
-			if (selected < 0) {
-				selected = 0;
+			selectedIndex -= 256;
+			if (selectedIndex < 0) {
+				selectedIndex = 0;
 			}
 			return;
 		} else if (p.keyCode == 0x22) { // Page down.
-			selected += 256;
-			if (selected > 0xffff) {
-				selected = 0xffff;
+			selectedIndex += 256;
+			if (selectedIndex > 0xffff) {
+				selectedIndex = 0xffff;
 			}
 			return;
 		} else if (p.keyCode == 0x24) { // Home.
-			selected -= 4096;
-			if (selected < 0) {
-				selected = 0;
+			selectedIndex -= 4096;
+			if (selectedIndex < 0) {
+				selectedIndex = 0;
 			}
 			return;
 		} else if (p.keyCode == 0x23) { // End.
-			selected += 4096;
-			if (selected > 0xffff) {
-				selected = 0xffff;
+			selectedIndex += 4096;
+			if (selectedIndex > 0xffff) {
+				selectedIndex = 0xffff;
 			}
 			return;
 		} else if (p.keyCode == PConstants.ESC) {
-			selected = -1;
+			selectedIndex = -1;
 			return;
 		}
 		// Write.
-		if (selected >= 0 && selected < cpu.rom.length) {
-			cpu.rom[selected] = (byte) (val & 0xff);
-		} else if ((selected & 0xff00) != 0xfe00) {
-			cpu.ram[selected] = (byte) (val & 0xff);
+		if (selectedIndex >= 0 && selectedIndex < cpu.rom.length) {
+			cpu.rom[selectedIndex] = (byte) (val & 0xff);
+		} else if ((selectedIndex & 0xff00) != 0xfe00) {
+			cpu.ram[selectedIndex] = (byte) (val & 0xff);
 		}
 	}
 	

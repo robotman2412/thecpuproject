@@ -14,8 +14,8 @@ public class GR8CPURev3_1 {
 	public static Throwable errorCause;
 	public static final int[] defaultISA = {
 			//region
-			0x01800010, 0x00180f50, 0x00181150, 0x02202000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-			0x01800010, 0x00180f50, 0x00181150, 0x020c2000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+			0x00180f50, 0x00181150, 0x00181950, 0x01800010, 0x02202000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+			0x00180f50, 0x00181150, 0x00181950, 0x01800010, 0x020c2000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00100ac0, 0x00100ac8, 0x00180f50, 0x00181150, 0x12042000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x40100010, 0x40180ad8, 0x00080ac0, 0x02042000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x02180350, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -131,8 +131,8 @@ public class GR8CPURev3_1 {
 			0x02000348, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x02001808, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x40100010, 0x40180ad8, 0x40180ad0, 0x00080b48, 0x02042000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+			0x00100ac0, 0x00100ac8, 0x00048a40, 0x08048ac8, 0x000004c0, 0x02042000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+			0x00100ac0, 0x00100ac8, 0x10048a40, 0x18048ac8, 0x000004c0, 0x00180f50, 0x00181150, 0x02042000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x03800000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -144,8 +144,8 @@ public class GR8CPURev3_1 {
 			0x00400000, 0x02000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x02100a88, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-			0x00181950, 0x00180f50, 0x00181150, 0x018c2010, 0x02100a88, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-			0x00181950, 0x00180f50, 0x00181150, 0x01a02010, 0x02100a88, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+			0x00180f50, 0x00181150, 0x00181950, 0x018c2010, 0x02100a88, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+			0x00180f50, 0x00181150, 0x00181950, 0x01a02010, 0x02100a88, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -272,9 +272,15 @@ public class GR8CPURev3_1 {
 			0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 			//endregion
 	};
-	
+
 	public static void loadExtract(String resource) throws IOException {
-		String dir = System.getProperties().getProperty("java.io.tempdir");
+		loadExtract(resource, null);
+	}
+
+	public static void loadExtract(String resource, String dir) throws IOException {
+		if (dir == null) {
+			dir = System.getProperty("user.dir");
+		}
 		File how = new File(dir, "gr8cpu_temp_lib");
 		if (!how.exists()) {
 			how.mkdir();
@@ -295,13 +301,14 @@ public class GR8CPURev3_1 {
 		in.close();
 		System.load(resulting.getAbsolutePath());
 	}
-	
+
 	static {
 		boolean a = false;
 		try {
 			System.loadLibrary("GR8EMUr3_1");
 			a = true;
 		} catch (Throwable e) {
+			e.printStackTrace();
 			System.out.println("Library not in java.library.path.");
 		}
 		if (!a) {
@@ -319,24 +326,30 @@ public class GR8CPURev3_1 {
 				try {
 					// MaxOS X, Darwin
 					// TODO: Detect ARM macs.
-					loadExtract("lib_GR8EMUr3_1.jnilib");
+					loadExtract("libGR8EMUr3_1.jnilib");
+					a = true;
+				} catch (Throwable e) {
+					System.err.println("Library load failed!");
+					errorCause = e;
+				}
+			} else if (osName.contains("linux") || osName.contains("nix")) {
+				try {
+					// Linux, x86
+					loadExtract("libGR8EMUr3_1.so", "/tmp");
 					a = true;
 				} catch (Throwable e) {
 					System.err.println("Library load failed!");
 					errorCause = e;
 				}
 			} else {
-				try {
-					// Linux, x86
-					loadExtract("GR8EMUr3_1.so");
-					a = true;
-				} catch (Throwable e) {
-					System.err.println("Library load failed!");
-					errorCause = e;
-				}
+				System.err.println("Can't determine OS!");
+				errorCause = new Exception("Can't determine OS!");
 			}
 		}
 		nativeLoadSuccess = a;
+		if (!nativeLoadSuccess && errorCause != null) {
+			errorCause.printStackTrace();
+		}
 	}
 	
 	// Registers.
@@ -355,6 +368,8 @@ public class GR8CPURev3_1 {
 	public long numCycles;
 	public long numInsns;
 	public long numSubs;
+	public long numMMIOR;
+	public long numMMIOW;
 	
 	// Debugging.
 	public short[] breakpoints;
@@ -397,6 +412,7 @@ public class GR8CPURev3_1 {
 	public static final int TICK_STEP_OUT = 0x00030203; // Step over out subroutine.
 	
 	public void writeMMIO(int address, byte value) {
+		numMMIOW ++;
 		address &= 0xffff;
 		
 		//FE20 -> $FE23 -- microsecond timer 0
@@ -496,7 +512,7 @@ public class GR8CPURev3_1 {
 		}
 		//endregion disk
 		else if (address == 0xfefd) {
-			GR8EMUr3_1.inst.ttyWrite(value);
+			Emulator.inst.ttyWrite(value);
 			System.out.write(value);
 			System.out.flush();
 		} else if (address == 0xfeca) {
@@ -515,6 +531,7 @@ public class GR8CPURev3_1 {
 	 * If notouchy is true, anything that activates on read will not be activated.
 	 */
 	public byte readMMIO(int address, boolean notouchy) {
+		if (!notouchy) numMMIOR ++;
 		address &= 0xffff;
 		
 		//FEFC -- keyboard register
@@ -523,7 +540,7 @@ public class GR8CPURev3_1 {
 		//FECB -- socket accept
 		
 		if (address == 0xfefc) {
-			return GR8EMUr3_1.inst.ttyRead(notouchy);
+			return Emulator.inst.ttyRead(notouchy);
 		} else if (address == 0xfed4) {
 			byte ret = 0x00;
 			if (volume != null && volume.length > volumePtr) {
@@ -562,6 +579,44 @@ public class GR8CPURev3_1 {
 		}
 		
 		return 0;
+	}
+	
+	/**
+	 * Reads memory in the same way the CPU would.
+	 * @param address the address to read from
+	 * @param noTouchy whether to apply effects like auto-increment counters
+	 * @return the byte in the specified position in memory
+	 */
+	public byte readMemory(int address, boolean noTouchy) {
+		address &= 0xffff;
+		if (address < rom.length) {
+			return rom[address];
+		}
+		else if ((address & 0xff00) == 0xfe00) {
+			return readMMIO(address, noTouchy);
+		}
+		else
+		{
+			return ram[address];
+		}
+	}
+	
+	/**
+	 * Writes memory in the same way the CPU would.
+	 * @param address the address to write to
+	 */
+	public void writeMemory(int address, byte value) {
+		address &= 0xffff;
+		if (address < rom.length) {
+			rom[address] = value;
+		}
+		else if ((address & 0xff00) == 0xfe00) {
+			writeMMIO(address, value);
+		}
+		else
+		{
+			ram[address] = value;
+		}
 	}
 	
 	/**
@@ -661,7 +716,7 @@ public class GR8CPURev3_1 {
 		regPC = regAR = stackPtr = adrBus = alo = regIRQ = regNMI = 0;
 		flagCout = flagZero = flagIRQ = flagNMI = flagHWI = false;
 		scheduledIRQ = scheduledNMI = -1;
-		numCycles = numInsns = numSubs = 0;
+		numCycles = numInsns = numSubs = numMMIOR = numMMIOW = 0;
 		if (rom == null) {
 			rom = new byte[0];
 		}

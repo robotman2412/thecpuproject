@@ -3,6 +3,7 @@ package net.scheffers.robot.emu;
 import jutils.database.BytePool;
 import jutils.gui.style.TextureButtonStyle;
 import jutils.guiv2.*;
+import net.scheffers.robot.emu.debugger.Debugger;
 import net.scheffers.robot.emu.modules.*;
 import net.scheffers.robot.hyperasm.AssemblerCore;
 import net.scheffers.robot.hyperasm.Pass2Out;
@@ -17,7 +18,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.Random;
 
-public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
+public class Emulator extends PApplet implements EMUConstants {
 	
 	public static final int EXC_ERR = -1;
 	public static final int EXC_NORM = 0;
@@ -29,11 +30,11 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	public static final int EXC_RESET = 6;
 	
 	public static void main(String[] args) {
-		PApplet.main(GR8EMUr3_1.class.getName());
+		PApplet.main(Emulator.class.getName());
 	}
 	
-	public GR8EMUr3_1() {
-		emulator = new EmuThread();
+	public Emulator() {
+		emuThread = new EmuThread();
 	}
 	
 	@Override
@@ -42,10 +43,10 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	}
 	
 	public Debugger debugger;
-	public final EmuThread emulator;
+	public final EmuThread emuThread;
 	public static PFont font12;
 	public static PFont font48;
-	public static GR8EMUr3_1 inst;
+	public static Emulator inst;
 	
 	//region GUI
 	public GUIScreen screen;
@@ -180,7 +181,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	//region resources
 	public static PImage loadJarImage(String resource) {
 		try {
-			InputStream stream = GR8EMUr3_1.class.getClassLoader().getResourceAsStream("emu_resources/" + resource);
+			InputStream stream = Emulator.class.getClassLoader().getResourceAsStream("emu_resources/" + resource);
 			if (stream == null) {
 				throw new FileNotFoundException(resource);
 			}
@@ -195,7 +196,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	
 	public static PFont loadJarFont(String resource) {
 		try {
-			InputStream stream = GR8EMUr3_1.class.getClassLoader().getResourceAsStream("emu_resources/" + resource);
+			InputStream stream = Emulator.class.getClassLoader().getResourceAsStream("emu_resources/" + resource);
 			if (stream == null) {
 				throw new FileNotFoundException(resource);
 			}
@@ -208,7 +209,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	
 	public static byte[] loadJarBytes(String resource) {
 		try {
-			InputStream stream = GR8EMUr3_1.class.getClassLoader().getResourceAsStream("emu_resources/" + resource);
+			InputStream stream = Emulator.class.getClassLoader().getResourceAsStream("emu_resources/" + resource);
 			if (stream == null) {
 				throw new FileNotFoundException(resource);
 			}
@@ -227,9 +228,9 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	public void setup() {
 		inst = this;
 		
-		emulator.setHertz(1000000);
-		emulator.doTick = false;
-		emulator.reset();
+		emuThread.setHertz(1000000);
+		emuThread.doTick = false;
+		emuThread.reset();
 		
 		//region loading
 		font12 = loadJarFont("font12.vlw");
@@ -303,7 +304,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		resetButton = new TextureButton(this, 2 * thingyWidth + 5, 5, 40, 40, false, new TextureButtonStyle(
 				reset, resetHover, resetPressed, resetDisabled
 		), () -> {
-			emulator.reset();
+			emuThread.reset();
 			for (int y = 0; y < ttyHeight; y++) {
 				for (int x = 0; x < ttyWidth; x++) {
 					ttyBuffer[y][x] = 0;
@@ -317,17 +318,17 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		
 		pauseButton = new TextureButton(this, 2 * thingyWidth + 45, 5, 40, 40, false, new TextureButtonStyle(
 				pause, pauseHover, pausePressed, pauseDisabled
-		), () -> emulator.doTick = false);
+		), () -> emuThread.doTick = false);
 		screen.add(pauseButton);
 		
 		playButton = new TextureButton(this, 2 * thingyWidth + 85, 5, 40, 40, false, new TextureButtonStyle(
 				play, playHover, playPressed, playDisabled
-		), () -> emulator.doTick = true);
+		), () -> emuThread.doTick = true);
 		screen.add(playButton);
 		
 		cycleButton = new TextureButton(this, 2 * thingyWidth + 125, 5, 40, 40, false, new TextureButtonStyle(
 				cycle, cycleHover, cyclePressed, cycleDisabled
-		), () -> emulator.forceTick++);
+		), () -> emuThread.forceTick++);
 		screen.add(cycleButton);
 		
 		debugButton = new TextureButton(this, 2 * thingyWidth + 165, 5, 40, 40, false, new TextureButtonStyle(
@@ -340,17 +341,17 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		//endregion control
 		
 		//region speed
-		screen.add(new Button(this, 2 * thingyWidth + 10, 50, 60, 20, "10 MHz", false, () -> emulator.setHertz(10000000)));
-		screen.add(new Button(this, 2 * thingyWidth + 10, 80, 60, 20, "1 MHz", false, () -> emulator.setHertz(1000000)));
-		screen.add(new Button(this, 2 * thingyWidth + 10, 110, 60, 20, "100 KHz", false, () -> emulator.setHertz(100000)));
-		screen.add(new Button(this, 2 * thingyWidth + 10, 140, 60, 20, "10 KHz", false, () -> emulator.setHertz(10000)));
-		screen.add(new Button(this, 2 * thingyWidth + 10, 170, 60, 20, "1 KHz", false, () -> emulator.setHertz(1000)));
+		screen.add(new Button(this, 2 * thingyWidth + 10, 50, 60, 20, "10 MHz", false, () -> emuThread.setHertz(10000000)));
+		screen.add(new Button(this, 2 * thingyWidth + 10, 80, 60, 20, "1 MHz", false, () -> emuThread.setHertz(1000000)));
+		screen.add(new Button(this, 2 * thingyWidth + 10, 110, 60, 20, "100 KHz", false, () -> emuThread.setHertz(100000)));
+		screen.add(new Button(this, 2 * thingyWidth + 10, 140, 60, 20, "10 KHz", false, () -> emuThread.setHertz(10000)));
+		screen.add(new Button(this, 2 * thingyWidth + 10, 170, 60, 20, "1 KHz", false, () -> emuThread.setHertz(1000)));
 		
-		screen.add(new Button(this, 2 * thingyWidth + 80, 50, 60, 20, "100 Hz", false, () -> emulator.setHertz(100)));
-		screen.add(new Button(this, 2 * thingyWidth + 80, 80, 60, 20, "10 Hz", false, () -> emulator.setHertz(10)));
-		screen.add(new Button(this, 2 * thingyWidth + 80, 110, 60, 20, "5 Hz", false, () -> emulator.setHertz(5)));
-		screen.add(new Button(this, 2 * thingyWidth + 80, 140, 60, 20, "2 Hz", false, () -> emulator.setHertz(2)));
-		screen.add(new Button(this, 2 * thingyWidth + 80, 170, 60, 20, "1 Hz", false, () -> emulator.setHertz(1)));
+		screen.add(new Button(this, 2 * thingyWidth + 80, 50, 60, 20, "100 Hz", false, () -> emuThread.setHertz(100)));
+		screen.add(new Button(this, 2 * thingyWidth + 80, 80, 60, 20, "10 Hz", false, () -> emuThread.setHertz(10)));
+		screen.add(new Button(this, 2 * thingyWidth + 80, 110, 60, 20, "5 Hz", false, () -> emuThread.setHertz(5)));
+		screen.add(new Button(this, 2 * thingyWidth + 80, 140, 60, 20, "2 Hz", false, () -> emuThread.setHertz(2)));
+		screen.add(new Button(this, 2 * thingyWidth + 80, 170, 60, 20, "1 Hz", false, () -> emuThread.setHertz(1)));
 		
 		speedMulDisabled = speedMulMHz;
 		speedDisabled = speed1;
@@ -358,77 +359,77 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		
 		//region modules
 		bus = new Register8Bit(this, 1 * thingyWidth, 0 * thingyHeight, "data bus");
-		bus.valueSupplier = () -> (int) emulator.instance.bus;
+		bus.valueSupplier = () -> (int) emuThread.cpu.bus;
 		screen.add(bus);
 		
 		regA = new Register8Bit(this, 1 * thingyWidth, 1 * thingyHeight, "A register");
-		regA.valueSupplier = () -> (int) emulator.instance.regA;
-		regA.valueUpdater = (v) -> emulator.instance.regA = (byte) (int) v;
+		regA.valueSupplier = () -> (int) emuThread.cpu.regA;
+		regA.valueUpdater = (v) -> emuThread.cpu.regA = (byte) (int) v;
 		screen.add(regA);
 		
 		regB = new Register8Bit(this, 1 * thingyWidth, 2 * thingyHeight, "B register");
-		regB.valueSupplier = () -> (int) emulator.instance.regB;
-		regB.valueUpdater = (v) -> emulator.instance.regB = (byte) (int) v;
+		regB.valueSupplier = () -> (int) emuThread.cpu.regB;
+		regB.valueUpdater = (v) -> emuThread.cpu.regB = (byte) (int) v;
 		screen.add(regB);
 		
 		alu = new ArithmeticLogicUnit(this, 1 * thingyWidth, 3 * thingyHeight, "ALU");
-		alu.valueSupplier = () -> (int) emulator.instance.alo;
+		alu.valueSupplier = () -> (int) emuThread.cpu.alo;
 		screen.add(alu);
 		
 		regF = new RegisterFlags(this, 1 * thingyWidth, 4 * thingyHeight, "flag register");
 		screen.add(regF);
 		
 		regX = new Register8Bit(this, 1 * thingyWidth, 5 * thingyHeight, "X register");
-		regX.valueSupplier = () -> (int) emulator.instance.regX;
-		regX.valueUpdater = (v) -> emulator.instance.regX = (byte) (int) v;
+		regX.valueSupplier = () -> (int) emuThread.cpu.regX;
+		regX.valueUpdater = (v) -> emuThread.cpu.regX = (byte) (int) v;
 		screen.add(regX);
 		
 		regY = new Register8Bit(this, 1 * thingyWidth, 6 * thingyHeight, "Y register");
-		regY.valueSupplier = () -> (int) emulator.instance.regY;
-		regY.valueUpdater = (v) -> emulator.instance.regY = (byte) (int) v;
+		regY.valueSupplier = () -> (int) emuThread.cpu.regY;
+		regY.valueUpdater = (v) -> emuThread.cpu.regY = (byte) (int) v;
 		screen.add(regY);
 		
 		regIR = new Register8Bit(this, 1 * thingyWidth, 7 * thingyHeight, "instruction register");
-		regIR.valueSupplier = () -> (int) emulator.instance.regIR;
-		regIR.valueUpdater = (v) -> emulator.instance.regIR = (byte) (int) v;
+		regIR.valueSupplier = () -> (int) emuThread.cpu.regIR;
+		regIR.valueUpdater = (v) -> emuThread.cpu.regIR = (byte) (int) v;
 		screen.add(regIR);
 		
 		adrBus = new Register16Bit(this, 0 * thingyWidth, 0 * thingyHeight, "address bus");
-		adrBus.valueSupplier = () -> (int) emulator.instance.adrBus;
-		regIR.valueUpdater = (v) -> emulator.instance.adrBus = (short) (int) v;
+		adrBus.valueSupplier = () -> (int) emuThread.cpu.adrBus;
+		regIR.valueUpdater = (v) -> emuThread.cpu.adrBus = (short) (int) v;
 		screen.add(adrBus);
 		
 		memory = new Memory(this, 0 * thingyWidth, 1 * thingyHeight, "memory");
-		memory.addressSource = emulator.instance::getAddress;
-		memory.cpu = emulator.instance;
+		memory.addressSource = emuThread.cpu::getAddress;
+		memory.cpu = emuThread.cpu;
 		screen.add(memory);
 		
 		regPC = new Register16Bit(this, 0 * thingyWidth, 5 * thingyHeight, "program counter");
-		regPC.valueSupplier = () -> (int) emulator.instance.regPC;
-		regPC.valueUpdater = (v) -> emulator.instance.regPC = (short) (int) v;
+		regPC.valueSupplier = () -> (int) emuThread.cpu.regPC;
+		regPC.valueUpdater = (v) -> emuThread.cpu.regPC = (short) (int) v;
 		screen.add(regPC);
 		
 		regAR = new Register16Bit(this, 0 * thingyWidth, 6 * thingyHeight, "address register");
-		regAR.valueSupplier = () -> (int) emulator.instance.regAR;
-		regAR.valueUpdater = (v) -> emulator.instance.regAR = (short) (int) v;
+		regAR.valueSupplier = () -> (int) emuThread.cpu.regAR;
+		regAR.valueUpdater = (v) -> emuThread.cpu.regAR = (short) (int) v;
 		screen.add(regAR);
 		
 		stackPtr = new Register16Bit(this, 0 * thingyWidth, 7 * thingyHeight, "stack pointer");
-		stackPtr.valueSupplier = () -> (int) emulator.instance.stackPtr;
-		stackPtr.valueUpdater = (v) -> emulator.instance.stackPtr = (short) (int) v;
+		stackPtr.valueSupplier = () -> (int) emuThread.cpu.stackPtr;
+		stackPtr.valueUpdater = (v) -> emuThread.cpu.stackPtr = (short) (int) v;
 		screen.add(stackPtr);
 		
 		regIRQ = new Register16Bit(this, 2 * thingyWidth, 3 * thingyHeight, "IRQ register");
-		regIRQ.valueSupplier = () -> (int) emulator.instance.regIRQ;
-		regIRQ.valueUpdater = (v) -> emulator.instance.regIRQ = (short) (int) v;
+		regIRQ.valueSupplier = () -> (int) emuThread.cpu.regIRQ;
+		regIRQ.valueUpdater = (v) -> emuThread.cpu.regIRQ = (short) (int) v;
 		screen.add(regIRQ);
 		
 		regNMI = new Register16Bit(this, 2 * thingyWidth, 4 * thingyHeight, "NMI register");
-		regNMI.valueSupplier = () -> (int) emulator.instance.regNMI;
-		regNMI.valueUpdater = (v) -> emulator.instance.regNMI = (short) (int) v;
+		regNMI.valueSupplier = () -> (int) emuThread.cpu.regNMI;
+		regNMI.valueUpdater = (v) -> emuThread.cpu.regNMI = (short) (int) v;
 		screen.add(regNMI);
 		
-		controlUnit = new ControlUnit(this, 2 * thingyWidth, 5 * thingyHeight, emulator);
+		controlUnit = new ControlUnit(this, 2 * thingyWidth, 5 * thingyHeight, emuThread);
 		screen.add(controlUnit);
 		//endregion modules
 		
@@ -445,7 +446,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		screen.add(ejectDrive);
 		
 		readOnlyImage = new CheckBox(this, 2 * thingyWidth + 260, 80, 20, 20, () -> {
-			emulator.instance.doWriteVolume = !readOnlyImage.value;
+			emuThread.cpu.doWriteVolume = !readOnlyImage.value;
 		});
 		readOnlyImage.value = true;
 		screen.add(readOnlyImage);
@@ -453,7 +454,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		//endregion settings
 		
 		if (GR8CPURev3_1.nativeLoadSuccess) {
-			emulator.start();
+			emuThread.start();
 		}
 		debugger = new Debugger();
 		
@@ -503,9 +504,9 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 			settingScreen.render();
 		} else {
 			// Button enable conditions.
-			pauseButton.enabled = emulator.doTick;
-			playButton.enabled = !emulator.doTick;
-			cycleButton.enabled = !emulator.doTick;
+			pauseButton.enabled = emuThread.doTick;
+			playButton.enabled = !emuThread.doTick;
+			cycleButton.enabled = !emuThread.doTick;
 			
 			// Draw the measured frequency.
 			textFont(font12, 12);
@@ -532,8 +533,8 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	}
 	
 	public String getSpeeds() {
-		double hertz = emulator.currentHertz;
-		double target = emulator.tickTimes * 1000000000d / emulator.nanoWait;
+		double hertz = emuThread.currentHertz;
+		double target = emuThread.tickTimes * 1000000000d / emuThread.nanoWait;
 		if (target >= 1000000) {
 			hertz = Math.round(hertz / 100000d) / 10d;
 			return hertz + " MHz";
@@ -606,7 +607,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 			if (paff.endsWith(".hex")) {
 				assemblyData = null;
 				selectedASM = null;
-				emulator.doTick = false;
+				emuThread.doTick = false;
 				byte[] rom = null;
 				try {
 					rom = decodeLHF(selected);
@@ -614,7 +615,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 					e.printStackTrace();
 				}
 				if (rom != null) {
-					emulator.instance.rom = rom;
+					emuThread.cpu.rom = rom;
 				}
 			} else if (paff.endsWith(".asm") || paff.endsWith(".S")) {
 				selectedASM = selected;
@@ -640,9 +641,9 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 			}
 		}
 		if (assemblyData == null) {
-			emulator.instance.rom = new byte[0];
+			emuThread.cpu.rom = new byte[0];
 		} else {
-			emulator.instance.rom = assemblyData.getBytes();
+			emuThread.cpu.rom = assemblyData.getBytes();
 		}
 	}
 	
@@ -709,7 +710,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 			screen.keyPressed();
 			if (ctrlPressed && key == 15) {
 				selectInput("Open ROM or assembly file...", "loadTheThingy");
-				emulator.doTick = false;
+				emuThread.doTick = false;
 			}
 		}
 		if (keyCode == CONTROL) {
@@ -731,14 +732,14 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 	//endregion UI
 	
 	public void ejectDrive() {
-		emulator.instance.setVolume(null, true);
+		emuThread.cpu.setVolume(null, true);
 		dispDriveFile.text = "none selected";
 	}
 	
 	public void selectDrive(File selected) {
 		if (selected != null) {
 			driveFile = selected.getAbsolutePath();
-			emulator.instance.setVolume(selected, true);
+			emuThread.cpu.setVolume(selected, true);
 			mousePressed = false;
 			dispDriveFile.text = selected.getName();
 		}
@@ -749,9 +750,9 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		if (key == ESC) {
 			return; // Stupid feature.
 		}
-		emulator.cont = false;
+		emuThread.cont = false;
 		try {
-			emulator.join(2500);
+			emuThread.join(2500);
 		} catch (InterruptedException e) {
 			System.err.println("Interruped waiting for emulator.");
 		}
@@ -778,7 +779,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 				"No instruction"
 		};
 		
-		public GR8CPURev3_1 instance;
+		public GR8CPURev3_1 cpu;
 		
 		protected int tickTimes;
 		protected long nanoWait;
@@ -790,7 +791,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 		public volatile int tickMode;
 		
 		public EmuThread() {
-			instance = new GR8CPURev3_1();
+			cpu = new GR8CPURev3_1();
 		}
 		
 		/**
@@ -867,14 +868,14 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 				int res;
 				if (tickMode != 0) {
 					times = tickTimes;
-					res = instance.tick(times, tickMode);
+					res = cpu.tick(times, tickMode);
 					if (res == 7) {
 						res = 0;
 					} else {
 						tickMode = 0;
 					}
 				} else {
-					res = instance.tick(times, 0);
+					res = cpu.tick(times, 0);
 				}
 				nano1 = (System.nanoTime() + 5000) / 10000 * 10000;
 				currentHertz = 1000000000d / (nano1 - nano2) * tickTimes;
@@ -931,7 +932,7 @@ public class GR8EMUr3_1 extends PApplet implements GR8EMUConstants {
 					}
 				}
 			}
-			instance.reset();
+			cpu.reset();
 		}
 	}
 	

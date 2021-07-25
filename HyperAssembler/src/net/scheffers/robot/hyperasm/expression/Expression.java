@@ -199,10 +199,10 @@ public class Expression {
 				return false;
 			}
 		}
-		else if (s.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+		else if (s.matches("[a-zA-Z_][a-zA-Z0-9_]*(?:.[a-zA-Z0-9_]+)?")) {
 			return pass1.isa.isValidLabelName(s);
 		}
-		else if (s.matches("[<>][a-zA-Z_][a-zA-Z0-9_]*")) {
+		else if (s.matches("[<>][a-zA-Z_][a-zA-Z0-9_]*(?:.[a-zA-Z0-9_]+)?")) {
 			return pass1.isa.isValidLabelName(s.substring(1));
 		}
 		else if (s.matches(".[a-zA-Z_][a-zA-Z0-9_]*")) {

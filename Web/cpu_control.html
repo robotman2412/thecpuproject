@@ -1,0 +1,21 @@
+<!doctype HTML>
+
+<html>
+	<head>
+		<title>Online CPU control testing</title>
+		<script src="cpu_control.js"></script>
+		<script src="util.js"></script>
+		<link rel="stylesheet" type="text/css" href="cpu_control.css">
+	</head>
+	<body onload="startCPUControl()">
+		<p id="queue_content"></p>
+		<button onclick="cmd('halt')">halt</button> <button onclick="cmd('cont')">continue</button><br>
+		<input type="text" placeholder="name" id="name_input"> <input type="text" placeholder="author" id="author_input"><br>
+		<textarea id="program_input"></textarea><br>
+		<button onclick="run()">run</button>
+		<h1 id="program_title" style="text-align:center;margin-bottom:0;">YOUR_MOM</h1><br>
+		<p style="font-size:150%;margin-top:0;"><span id="program_author"><b>Submitted by </b>RobotMan2412</span><span id="program_remaining">00:53</span></p>
+		
+	</body>
+</html>
+

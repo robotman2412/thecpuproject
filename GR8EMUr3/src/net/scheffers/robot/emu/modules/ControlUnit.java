@@ -2,12 +2,12 @@ package net.scheffers.robot.emu.modules;
 
 import jutils.guiv2.GUIElement;
 import net.scheffers.robot.emu.GR8CPURev3_1;
-import net.scheffers.robot.emu.GR8EMUConstants;
-import net.scheffers.robot.emu.GR8EMUr3_1;
+import net.scheffers.robot.emu.EMUConstants;
+import net.scheffers.robot.emu.Emulator;
 import processing.core.PApplet;
 import processing.core.PConstants;
 
-public class ControlUnit extends GUIElement implements PConstants, GR8EMUConstants {
+public class ControlUnit extends GUIElement implements PConstants, EMUConstants {
 	
 	public String[] controls = {
 			"AIA", "AIB", "AIO", "in_0", "OPTN0", "-", "in_1", "in_2",
@@ -17,12 +17,12 @@ public class ControlUnit extends GUIElement implements PConstants, GR8EMUConstan
 	};
 	
 	public GR8CPURev3_1 cpu;
-	public GR8EMUr3_1.EmuThread emulator;
+	public Emulator.EmuThread emulator;
 	public int selected;
 	
-	public ControlUnit(PApplet p, int x, int y, GR8EMUr3_1.EmuThread emulator) {
+	public ControlUnit(PApplet p, int x, int y, Emulator.EmuThread emulator) {
 		super(p, x, y, thingyWidth, thingyHeight * 3);
-		this.cpu = emulator.instance;
+		this.cpu = emulator.cpu;
 		this.emulator = emulator;
 	}
 	
@@ -36,7 +36,7 @@ public class ControlUnit extends GUIElement implements PConstants, GR8EMUConstan
 		p.rect(0, 0, thingyWidth, thingyHeight * 3);
 		
 		p.textAlign(PConstants.CENTER);
-		p.textFont(GR8EMUr3_1.font12, 12);
+		p.textFont(Emulator.font12, 12);
 		p.fill(0);
 		p.text("control unit", thingyWidth * 0.5f, 14);
 		
@@ -120,13 +120,13 @@ public class ControlUnit extends GUIElement implements PConstants, GR8EMUConstan
 			p.rect(125, 63, 28, 18);
 		}
 		
-		p.textFont(GR8EMUr3_1.font48, 24);
+		p.textFont(Emulator.font48, 24);
 		p.stroke(0);
 		p.fill(0);
 		p.text(String.format("%01x", cpu.mode), thingyWidth * 0.20f, 80);
 		p.text(String.format("%01x", cpu.stage), thingyWidth * 0.70f, 80);
 		
-		p.textFont(GR8EMUr3_1.font12, 12);
+		p.textFont(Emulator.font12, 12);
 		
 		p.text("mode", thingyWidth * 0.20f, 40);
 		p.text("stage", thingyWidth * 0.70f, 40);

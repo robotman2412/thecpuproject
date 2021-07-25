@@ -1,6 +1,6 @@
 package net.scheffers.robot.emu;
 
-public interface GR8EMUConstants {
+public interface EMUConstants {
 	
 	
 	int thingyWidth = 200;

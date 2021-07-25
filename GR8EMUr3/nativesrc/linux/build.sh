@@ -8,4 +8,4 @@ g++ -c -fPIC -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -I../common lin
 g++ -shared -fPIC -o build/GR8EMUr3_1.so build/linuxjni.o build/GR8EMUr3_2.o -lc
 
 # Copy output.
-cp build/GR8EMUr3_1.so ../../natives/GR8EMUr3_1.so
+cp build/GR8EMUr3_1.so ../../natives/libGR8EMUr3_1.so

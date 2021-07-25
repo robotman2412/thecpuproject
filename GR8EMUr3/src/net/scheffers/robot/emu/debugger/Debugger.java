@@ -1,22 +1,23 @@
-package net.scheffers.robot.emu;
+package net.scheffers.robot.emu.debugger;
 
 import jutils.gui.style.TextureButtonStyle;
 import jutils.guiv2.*;
+import net.scheffers.robot.emu.EMUConstants;
+import net.scheffers.robot.emu.Emulator;
+import net.scheffers.robot.emu.GR8CPURev3_1;
 import net.scheffers.robot.hyperasm.AssemblerCore;
+import net.scheffers.robot.hyperasm.Label;
 import net.scheffers.robot.hyperasm.Pass2Out;
 import net.scheffers.robot.xasm.expression.Expression;
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.event.MouseEvent;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public class Debugger extends PApplet implements GR8EMUConstants {
+public class Debugger extends PApplet implements EMUConstants {
 	
-	public final GR8EMUr3_1 emu;
+	public final Emulator emu;
 	public final GR8CPURev3_1 cpu;
 	
 	public Map<String, Integer> verboseColorMap;
@@ -36,14 +37,15 @@ public class Debugger extends PApplet implements GR8EMUConstants {
 	public int asmOffset;
 	public short lastPC;
 	public boolean hasTheEval;
+	public List<Variable> variables;
 	
 	public PImage iconImage;
 	
 	public Set<Short> breakpoints = new HashSet<>();
 	
 	public Debugger() {
-		emu = GR8EMUr3_1.inst;
-		cpu = emu.emulator.instance;
+		emu = Emulator.inst;
+		cpu = emu.emuThread.cpu;
 		verboseColorMap = new HashMap<>();
 		colorMap = new HashMap<>();
 		
@@ -75,12 +77,13 @@ public class Debugger extends PApplet implements GR8EMUConstants {
 		verboseColorMap.put("irq", 0xff0000ff);
 		verboseColorMap.put("nmi", 0xff0000ff);
 		
-		verboseColorMap.put("to", 0xff0000ff);
-		verboseColorMap.put("config", 0xff0000ff);
-		verboseColorMap.put("cont", 0xff0000ff);
-		verboseColorMap.put("if", 0xff0000ff);
-		verboseColorMap.put("unless", 0xff0000ff);
-		verboseColorMap.put("pointer", 0xff0000ff);
+		verboseColorMap.put("to", 0xff3030ff);
+		verboseColorMap.put("config", 0xff3030ff);
+		verboseColorMap.put("cont", 0xff3030ff);
+		verboseColorMap.put("if", 0xff3030ff);
+		verboseColorMap.put("unless", 0xff3030ff);
+		verboseColorMap.put("pointer", 0xff3030ff);
+		verboseColorMap.put("table", 0xff3030ff);
 		
 		verboseColorMap.put("a", 0xff8080c0);
 		verboseColorMap.put("b", 0xff8080c0);
@@ -110,10 +113,10 @@ public class Debugger extends PApplet implements GR8EMUConstants {
 		colorMap.put("jmp", 0xff0000ff);
 		colorMap.put("beq", 0xff0000ff);
 		colorMap.put("bne", 0xff0000ff);
-		colorMap.put("bov", 0xff0000ff);
-		colorMap.put("bno", 0xff0000ff);
-		colorMap.put("bun", 0xff0000ff);
-		colorMap.put("bnu", 0xff0000ff);
+		colorMap.put("bgt", 0xff0000ff);
+		colorMap.put("ble", 0xff0000ff);
+		colorMap.put("blt", 0xff0000ff);
+		colorMap.put("bge", 0xff0000ff);
 		colorMap.put("bcs", 0xff0000ff);
 		colorMap.put("bcc", 0xff0000ff);
 		colorMap.put("mov", 0xff0000ff);
@@ -165,6 +168,7 @@ public class Debugger extends PApplet implements GR8EMUConstants {
 		colorMap.put(")", 0xff008080);
 		//endregion standard
 		
+		variables = new LinkedList<>();
 	}
 	
 	@Override
@@ -174,8 +178,7 @@ public class Debugger extends PApplet implements GR8EMUConstants {
 	
 	@Override
 	public void setup() {
-		hide();
-		textFont(GR8EMUr3_1.font12, 12);
+		textFont(Emulator.font12, 12);
 		surface.setResizable(true);
 		
 		screen = new GUIScreen(this);
@@ -192,32 +195,32 @@ public class Debugger extends PApplet implements GR8EMUConstants {
 		
 		pauseButton = new TextureButton(this, 40, 5, 40, 40, false, new TextureButtonStyle(
 				emu.pause, emu.pauseHover, emu.pausePressed, emu.pauseDisabled
-		), () -> emu.emulator.doTick = false);
+		), () -> emu.emuThread.doTick = false);
 		screen.add(pauseButton);
 		
 		playButton = new TextureButton(this, 80, 5, 40, 40, false, new TextureButtonStyle(
 				emu.play, emu.playHover, emu.playPressed, emu.playDisabled
-		), () -> emu.emulator.doTick = true);
+		), () -> emu.emuThread.doTick = true);
 		screen.add(playButton);
 		
 		cycleButton = new TextureButton(this, 120, 5, 40, 40, false, new TextureButtonStyle(
 				emu.cycle, emu.cycleHover, emu.cyclePressed, emu.cycleDisabled
-		), () -> {synchronized (emu.emulator){emu.emulator.forceTick++;}});
+		), () -> {synchronized (emu.emuThread){emu.emuThread.forceTick++;}});
 		screen.add(cycleButton);
 		
 		stepOverButton = new TextureButton(this, 160, 5, 40, 40, false, new TextureButtonStyle(
 				emu.stepOver, emu.stepOverHover, emu.stepOverPressed, emu.stepOverDisabled
-		), emu.emulator::stepOver);
+		), emu.emuThread::stepOver);
 		screen.add(stepOverButton);
 		
 		stepInButton = new TextureButton(this, 200, 5, 40, 40, false, new TextureButtonStyle(
 				emu.stepIn, emu.stepInHover, emu.stepInPressed, emu.stepInDisabled
-		), emu.emulator::stepIn);
+		), emu.emuThread::stepIn);
 		screen.add(stepInButton);
 		
 		stepOutButton = new TextureButton(this, 240, 5, 40, 40, false, new TextureButtonStyle(
 				emu.stepOut, emu.stepOutHover, emu.stepOutPressed, emu.stepOutDisabled
-		), emu.emulator::stepOut);
+		), emu.emuThread::stepOut);
 		screen.add(stepOutButton);
 		
 		evalInput = new TextInput(this, 280, 10, 150, 20, TextInputType.STRING);
@@ -236,9 +239,12 @@ public class Debugger extends PApplet implements GR8EMUConstants {
 	
 	@Override
 	public void draw() {
+		if (frameCount <= 1) hide();
 		background(0xffffff);
 		textAlign(CORNER);
 		drawAsm();
+		drawVars();
+		drawStats();
 		screen.render();
 		if (hasTheEval) {
 			fill(0xff3f3f3f);
@@ -249,12 +255,12 @@ public class Debugger extends PApplet implements GR8EMUConstants {
 			text(String.format("= $%04x ($%s)", evaluated, bin), 380, 42);
 		}
 		
-		pauseButton.enabled = emu.emulator.doTick;
-		playButton.enabled = !emu.emulator.doTick;
-		cycleButton.enabled = !emu.emulator.doTick;
-		stepOverButton.enabled = !emu.emulator.doTick;
-		stepInButton.enabled = !emu.emulator.doTick;
-		stepOutButton.enabled = !emu.emulator.doTick;
+		pauseButton.enabled = emu.emuThread.doTick;
+		playButton.enabled = !emu.emuThread.doTick;
+		cycleButton.enabled = !emu.emuThread.doTick;
+		stepOverButton.enabled = !emu.emuThread.doTick;
+		stepInButton.enabled = !emu.emuThread.doTick;
+		stepOutButton.enabled = !emu.emuThread.doTick;
 	}
 	
 	public void drawAsm() {
@@ -298,7 +304,7 @@ public class Debugger extends PApplet implements GR8EMUConstants {
 				if (cpu.regPC >= dump.lineStartAddresses[index] && cpu.regPC < dump.lineStartAddresses[index] + dump.lineLengths[index]) {
 					fill(0xfffffea8);
 					noStroke();
-					rect(0, yOffset * lineHeight + 1, width, lineHeight + 1);
+					rect(0, yOffset * lineHeight + 1, (int) (width * 2 / 3), lineHeight + 1);
 					stroke(0);
 				}
 				if (dump.lineLengths[index] > 0 && breakpoints.contains((short) dump.lineStartAddresses[index])) {
@@ -369,6 +375,80 @@ public class Debugger extends PApplet implements GR8EMUConstants {
 			}
 		}
 		popMatrix();
+	}
+	
+	public void drawVars() {
+		float lineHeight = 13;
+		pushMatrix();
+		translate((int) (width * 2 / 3), 50);
+		fill(0xff0000ff);
+		int nameOffset = 0;
+		for (int i = 0; i < variables.size(); i++) {
+			Variable var = variables.get(i);
+			var.updateValue();
+			text(var.typeName, 0, i * lineHeight + 13);
+			nameOffset = Math.max(nameOffset, (int) textWidth(var.typeName) + 15);
+		}
+		popMatrix();
+//		Variable var = new Variable();
+//		var.labelName = "_alloc_space_lo";
+//		var.name = "_alloc_space";
+//		var.address = 0x2030;
+//		var.numBytes = 2;
+//		var.updateTypeName();
+//		variables.add(var);
+	}
+	
+	public void drawStats() {
+		pushMatrix();
+		translate(width * 0.6666666f + 20, 60);
+		fill(0);
+		text("Statistics:", 0, 0);
+		text("Num cycles:", 0, 20);
+		text("Num calls:",  0, 40);
+		text("Num insns:",  0, 60);
+		text("Num MMIO R:", 0, 80);
+		text("Num MMIO W:", 0, 100);
+		textAlign(RIGHT);
+		text(formatNicely(Emulator.inst.emuThread.cpu.numCycles), 200, 20);
+		text(formatNicely(Emulator.inst.emuThread.cpu.numSubs),   200, 40);
+		text(formatNicely(Emulator.inst.emuThread.cpu.numInsns),  200, 60);
+		text(formatNicely(Emulator.inst.emuThread.cpu.numMMIOR),  200, 80);
+		text(formatNicely(Emulator.inst.emuThread.cpu.numMMIOW),  200, 100);
+		int y = 120;
+		textAlign(CORNER);
+		text("Breakpoints:", 0, 120);
+		for (short at : breakpoints.toArray(new Short[0])) {
+			y += 20;
+			String label = addressToLabel(at & 0xffff);
+			textAlign(CORNER);
+			if (label == null) {
+				fill(0xffff0000);
+				text(String.format("0x%04x", at & 0xffff), 0, y);
+			} else {
+				fill(0xffff0000);
+				text(String.format("0x%04x", at & 0xffff), 0, y);
+				textAlign(RIGHT);
+				fill(0xff000000);
+				text(label, 200, y);
+			}
+		}
+		popMatrix();
+	}
+	
+	public String formatNicely(long value) {
+		String raw = "" + value;
+		char[] arr = new char[raw.length()+(raw.length()-1)/3];
+		int x = arr.length - 1;
+		for (int i = raw.length() - 1; i >= 0; i--) {
+			arr[x] = raw.charAt(i);
+			x --;
+			if ((raw.length() - i) % 3 == 0 && i < raw.length() - 1 && i > 0) {
+				arr[x] = ' ';
+				x --;
+			}
+		}
+		return new String(arr);
 	}
 	
 	public void buttonBreaks() {
@@ -487,9 +567,26 @@ public class Debugger extends PApplet implements GR8EMUConstants {
 		}
 	}
 	
+	public void breakingPointerLists() {
+		int x = mouseX - Math.round(width * 0.6666666f + 20);
+		int y = (mouseY - 120 - 60) / 20;
+		if (y < 0 || y >= breakpoints.size() || x < 0) return;
+		if (mouseButton == RIGHT) {
+			short at = breakpoints.toArray(new Short[0])[y];
+			breakpoints.remove(at);
+		} else {
+			short at = breakpoints.toArray(new Short[0])[y];
+			int index = addressToIndex(at & 0xffff);
+			if (index >= 0) {
+				asmOffset = index;
+			}
+		}
+	}
+	
 	@Override
 	public void mousePressed() {
 		attemptToBreakThePoint();
+		breakingPointerLists();
 		screen.mousePressed();
 	}
 	
@@ -553,6 +650,21 @@ public class Debugger extends PApplet implements GR8EMUConstants {
 			}
 		}
 		return -1;
+	}
+	
+	public String addressToLabel(int address) {
+		Pass2Out dump = emu.assemblyData;
+		if (dump == null) {
+			return null;
+		}
+		for (Map.Entry<String, Label> set : dump.labels.entrySet()) {
+			String name = set.getKey();
+			Label label = set.getValue();
+			if (label.address == address) {
+				return name;
+			}
+		}
+		return null;
 	}
 	
 	@Override

@@ -1,0 +1,950 @@
+{
+    "metadata": {
+        "word_size": 8,
+        "processor_names": [
+            "GR8CPU Rev2",
+            "GR8CPUr2"
+        ],
+        "default_little_endian": true,
+        "has_loaders": true,
+        "sorting": "hex"
+    },
+    "load": [],
+    "instructions": [
+        {
+            "name": "nop",
+            "verbose": "nop",
+            "type": "single_word",
+            "hex": "00",
+            "args": [],
+            "desc": [
+                "Do nothing."
+            ],
+            "controls": [
+                "STR"
+            ],
+            "manual_pos": 0,
+            "sorted_pos": 0
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "addres",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "load %",
+            "verbose": "load %",
+            "hex": "01",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 1
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "load #%",
+            "verbose": "load #%",
+            "hex": "02",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 2
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "copy A to C",
+            "verbose": "copy A to C",
+            "hex": "03",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 3
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "copy A to D",
+            "verbose": "copy A to D",
+            "hex": "04",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 4
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "copy C to A",
+            "verbose": "copy C to A",
+            "hex": "05",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 5
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "copy D to A",
+            "verbose": "copy D to A",
+            "hex": "06",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 6
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "add %",
+            "verbose": "add %",
+            "hex": "07",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 7
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "add #%",
+            "verbose": "add #%",
+            "hex": "09",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 8
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "sub %",
+            "verbose": "sub %",
+            "hex": "0B",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 9
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "sub #%",
+            "verbose": "sub #%",
+            "hex": "0C",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 10
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "comp %",
+            "verbose": "comp %",
+            "hex": "0f",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 11
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "comp #%",
+            "verbose": "comp #%",
+            "hex": "10",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 12
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "jump %",
+            "verbose": "jump %",
+            "hex": "11",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 13
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "jump %, if A = B",
+            "verbose": "jump %, if A = B",
+            "hex": "12",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 14
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "jump %, unless A = B",
+            "verbose": "jump %, unless A = B",
+            "hex": "13",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 15
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "jump %, if A > B",
+            "verbose": "jump %, if A > B",
+            "hex": "14",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 16
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "jump %, if A <= B",
+            "verbose": "jump %, if A <= B",
+            "hex": "15",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 17
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "jump %, if A < B",
+            "verbose": "jump %, if A < B",
+            "hex": "16",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 18
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "jump %, if A >= B",
+            "verbose": "jump %, if A >= B",
+            "hex": "17",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 19
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "jump %, if carry",
+            "verbose": "jump %, if carry",
+            "hex": "18",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 20
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "jump %, unless carry",
+            "verbose": "jump %, unless carry",
+            "hex": "19",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 21
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "or %",
+            "verbose": "or %",
+            "hex": "1a",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 22
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "or #%",
+            "verbose": "or #%",
+            "hex": "1b",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 23
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "and %",
+            "verbose": "and %",
+            "hex": "1c",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 24
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "and #%",
+            "verbose": "and #%",
+            "hex": "1d",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 25
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "xor %",
+            "verbose": "xor %",
+            "hex": "1e",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 26
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "value",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "xor #%",
+            "verbose": "xor #%",
+            "hex": "1f",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 27
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "shift L",
+            "verbose": "shift L",
+            "hex": "20",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 28
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "shift R",
+            "verbose": "shift R",
+            "hex": "21",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 29
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "store %",
+            "verbose": "store %",
+            "hex": "22",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 30
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "inc %",
+            "verbose": "inc %",
+            "hex": "23",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 31
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "inc",
+            "verbose": "inc",
+            "hex": "24",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 32
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "dec %",
+            "verbose": "dec %",
+            "hex": "25",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 33
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "dec",
+            "verbose": "dec",
+            "hex": "26",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 34
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "addrress",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "shift L, %",
+            "verbose": "shift L, %",
+            "hex": "27",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 35
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "shift R, %",
+            "verbose": "shift R, %",
+            "hex": "28",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 36
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "load %, offset A",
+            "verbose": "load %, offset A",
+            "hex": "29",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 37
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "rot L",
+            "verbose": "rot L",
+            "hex": "2a",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 38
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "rot R",
+            "verbose": "rot R",
+            "hex": "2b",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 39
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "rot L, %",
+            "verbose": "rot L, %",
+            "hex": "2c",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 40
+        },
+        {
+            "type": "single_arg",
+            "args": [
+                {
+                    "name": "address",
+                    "type": {
+                        "bits": 8,
+                        "is_little_endian": true
+                    }
+                }
+            ],
+            "name": "rot R, %",
+            "verbose": "rot R, %",
+            "hex": "2d",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 41
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "inc C",
+            "verbose": "inc C",
+            "hex": "2e",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 42
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "dec C",
+            "verbose": "dec C",
+            "hex": "2f",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 43
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "shift L, C",
+            "verbose": "shift L, C",
+            "hex": "30",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 44
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "shift R, C",
+            "verbose": "shift R, C",
+            "hex": "31",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 45
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "rot L, C",
+            "verbose": "rot L, C",
+            "hex": "32",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 46
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "rot R, C",
+            "verbose": "rot R, C",
+            "hex": "33",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 47
+        },
+        {
+            "type": "single_arg",
+            "args": [],
+            "name": "halt",
+            "verbose": "",
+            "hex": "3f",
+            "desc": [
+                ""
+            ],
+            "controls": [
+                ""
+            ],
+            "manual_pos": 48
+        }
+    ]
+}

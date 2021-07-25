@@ -92,6 +92,11 @@ public class InstructionSet {
     }
     
     public boolean isValidLabelName(String s) {
+        if (s.startsWith(".")) s = s.substring(1);
+        else if (s.contains(".")) {
+            int x = s.indexOf('.');
+            return isValidLabelName(s.substring(0, x)) && isValidLabelName(s.substring(x + 1));
+        }
         // Check for valid label structure.
         if (!matchValidLabel(s)) {
             // Not matched, label name is invalid.
