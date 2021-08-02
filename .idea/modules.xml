@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/Assembler/Assembler.iml" filepath="$PROJECT_DIR$/Assembler/Assembler.iml" />
+      <module fileurl="file://$PROJECT_DIR$/CPUControl/CPUControl.iml" filepath="$PROJECT_DIR$/CPUControl/CPUControl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Compression/Compression.iml" filepath="$PROJECT_DIR$/Compression/Compression.iml" />
+      <module fileurl="file://$PROJECT_DIR$/GR8EMU/GR8EMU.iml" filepath="$PROJECT_DIR$/GR8EMU/GR8EMU.iml" />
+      <module fileurl="file://$PROJECT_DIR$/GR8EMUr3/GR8EMUr3.iml" filepath="$PROJECT_DIR$/GR8EMUr3/GR8EMUr3.iml" />
+      <module fileurl="file://$PROJECT_DIR$/GR8ISGEN/GR8ISGEN.iml" filepath="$PROJECT_DIR$/GR8ISGEN/GR8ISGEN.iml" />
+      <module fileurl="file://$PROJECT_DIR$/HyperAssembler/HyperAssembler.iml" filepath="$PROJECT_DIR$/HyperAssembler/HyperAssembler.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ISHelper/ISHelper.iml" filepath="$PROJECT_DIR$/ISHelper/ISHelper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SoundTest/SoundTest.iml" filepath="$PROJECT_DIR$/SoundTest/SoundTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fs-tools/fs-tools.iml" filepath="$PROJECT_DIR$/fs-tools/fs-tools.iml" />
+    </modules>
+  </component>
+</project>

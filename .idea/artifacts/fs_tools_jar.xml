@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="fs-tools:jar">
+    <output-path>$PROJECT_DIR$/../../logisim projects/GR8CPU Rev3.2/</output-path>
+    <root id="archive" name="fstools.jar">
+      <element id="module-output" name="fs-tools" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../JUtils.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

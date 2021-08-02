@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="GR8ISGENr3.2">
+    <output-path>$PROJECT_DIR$/../../logisim projects/GR8CPU Rev3.2</output-path>
+    <root id="archive" name="GR8ISGENr3.2.jar">
+      <element id="module-output" name="GR8ISGEN" />
+      <element id="extracted-dir" path="$USER_HOME$/eclipse-workspace/JUtils.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="C:/Program Files (x86)/processing-3.3.7/core/library/core.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
