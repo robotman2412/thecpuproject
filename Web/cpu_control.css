@@ -1,0 +1,29 @@
+
+button, input {
+	width: 10em;
+	margin: 0.2em 0;
+	box-sizing: border-box;
+}
+
+textarea {
+	width: 25em;
+	height: 30em;
+	margin: 0.2em 0;
+}
+
+#program_remaining {
+	float: right;
+}
+
+#queue_content {
+	float: right;
+	width: 50%;
+}
+
+#queue_content span {
+	float: left;
+}
+
+#queue_content .queue-author {
+	float: right;
+}

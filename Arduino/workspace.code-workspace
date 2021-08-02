@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "Rev2Clock"
+		},
+		{
+			"path": "CPUControlRev2"
+		},
+		{
+			"name": "Rev2Mem",
+			"path": "Rev2Mem"
+		}
+	],
+	"settings": {}
+}
