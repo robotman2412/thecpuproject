@@ -1,0 +1,3 @@
+D:\logisim projects\GR8CPU Rev2.1\programs\prime8bit.asm
+D:\logisim projects\GR8CPU Rev2.1\IS\ASMGV2.txt
+D:\logisim projects\GR8CPU Rev2.1\programs\prime8bit.hex

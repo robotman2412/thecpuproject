@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+Main-Class: isgen.ISGUI_R3_2
+
