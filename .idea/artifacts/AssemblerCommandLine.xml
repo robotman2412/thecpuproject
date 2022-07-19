@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="AssemblerCommandLine">
-    <output-path>$PROJECT_DIR$/../../logisim projects/</output-path>
+    <output-path>$PROJECT_DIR$/../../../get me data/logisim projects/</output-path>
     <root id="archive" name="HyperAssembler.jar">
       <element id="module-output" name="HyperAssembler" />
       <element id="extracted-dir" path="$PROJECT_DIR$/HyperAssembler/json-20201115.jar" path-in-jar="/" />

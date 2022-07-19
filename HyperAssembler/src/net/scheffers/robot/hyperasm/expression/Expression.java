@@ -441,7 +441,13 @@ public class Expression {
 		else if (token.matches("-?[0-9]+")) {
 			return new long[] {Long.parseLong(token) & bitmask};
 		}
-		throw new IllegalArgumentException("Value literal format invalid.");
+		else if ((token.charAt(0) == '<' || token.charAt(0) == '>') && pass1.isa.isValidLabelName(token.substring(1))) {
+			throw new IllegalArgumentException("No such label '" + token.substring(1) + "'.");
+		}
+		else if (pass1.isa.isValidLabelName(token)) {
+			throw new IllegalArgumentException("No such label '" + token + "'.");
+		}
+		throw new IllegalArgumentException("Invalid label or literal '" + token + "'.");
 	}
 	
 	public static long unbin(String binary) throws IllegalArgumentException {

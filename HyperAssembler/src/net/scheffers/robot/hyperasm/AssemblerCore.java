@@ -1,7 +1,6 @@
 package net.scheffers.robot.hyperasm;
 
 import com.sun.istack.internal.Nullable;
-import javafx.util.Pair;
 import net.scheffers.robot.hyperasm.exception.CompilerError;
 import net.scheffers.robot.hyperasm.exception.CompilerSyntaxError;
 import net.scheffers.robot.hyperasm.exception.CompilerWarning;
@@ -11,6 +10,7 @@ import net.scheffers.robot.hyperasm.importing.ImportSupplier;
 import net.scheffers.robot.hyperasm.importing.NopImportSupplier;
 import net.scheffers.robot.hyperasm.isa.InstructionDef;
 import net.scheffers.robot.hyperasm.isa.InstructionSet;
+import net.scheffers.robot.util.Pair;
 
 import java.io.File;
 import java.io.FileNotFoundException;

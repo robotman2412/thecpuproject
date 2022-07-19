@@ -118,6 +118,7 @@ public class AssemblerCmdLine {
 				'g', 'r', '8', 'o', // Magic.
 				(byte) 0x01, // Type: Statically linked executable.
 				(byte) 0x01, // Num sections: 1.
+				0, 0, // File content length.
 				// Section:
 					(byte) 0x07, // Type: RWX.
 					(byte) 0x00, // Offset.
@@ -133,8 +134,10 @@ public class AssemblerCmdLine {
 				// No external symbols.
 		};
 		int fileOffset = bin.length;
-		bin[9] = (byte) (fileOffset & 0xff);
-		bin[10] = (byte) (fileOffset >>> 8);
+		bin[6] = (byte) (prg.length & 0xff);
+		bin[7] = (byte) (prg.length >>> 8);
+		bin[11] = (byte) (fileOffset & 0xff);
+		bin[12] = (byte) (fileOffset >>> 8);
 		// Headers.
 		out.write(bin);
 		// Main section data.

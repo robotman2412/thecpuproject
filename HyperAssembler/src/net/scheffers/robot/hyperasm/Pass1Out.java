@@ -1,6 +1,6 @@
 package net.scheffers.robot.hyperasm;
 
-import javafx.util.Pair;
+import net.scheffers.robot.util.Pair;
 import net.scheffers.robot.hyperasm.isa.InstructionDef;
 import net.scheffers.robot.hyperasm.isa.InstructionSet;
 
